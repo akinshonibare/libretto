@@ -62,7 +62,7 @@ export function ProfileEditor({ initialHandle, initialDisplayName, initialBio }:
         <Label htmlFor="handle">Username</Label>
         <div className="flex items-stretch overflow-hidden rounded-md border border-[var(--input)] bg-[var(--card)] focus-within:ring-2 focus-within:ring-[var(--ring)] focus-within:ring-offset-2 focus-within:ring-offset-[var(--background)]">
           <span className="flex items-center px-3 text-sm text-[var(--muted-foreground)]">
-            libretto-ivory.vercel.app/u/
+            libretto.akinshonibare.com/u/
           </span>
           <input
             id="handle"

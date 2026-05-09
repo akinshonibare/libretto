@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ServiceWorkerRegister } from "@/components/sw-register";
 import { PageDecor } from "@/components/page-decor";
+import { EasterEgg } from "@/components/easter-egg";
 import { readThemeCookie } from "@/lib/theme-cookie";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -56,7 +57,10 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)]">
         <PageDecor />
-        <ThemeProvider initial={theme}>{children}</ThemeProvider>
+        <ThemeProvider initial={theme}>
+          {children}
+          <EasterEgg />
+        </ThemeProvider>
         <ServiceWorkerRegister />
       </body>
     </html>
