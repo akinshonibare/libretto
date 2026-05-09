@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/migrate.js && next build",
+    "build:vercel": "node scripts/migrate.js && next build",
+    "build:no-migrate": "next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -12,16 +14,18 @@
     "db:push": "supabase db push --include-all --linked",
     "db:diff": "supabase db diff --linked",
     "db:types": "supabase gen types typescript --linked --schema public > lib/supabase/types.generated.ts",
-    "predeploy": "pnpm typecheck && pnpm db:push",
     "deploy": "vercel --prod"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["supabase"]
+    "onlyBuiltDependencies": [
+      "supabase"
+    ]
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
+    "@vercel/og": "^0.11.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.14.0",

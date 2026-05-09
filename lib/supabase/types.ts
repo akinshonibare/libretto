@@ -97,6 +97,7 @@ export type Database = {
           label: string | null;
           body: string;
           page: number | null;
+          session_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -105,9 +106,95 @@ export type Database = {
           label?: string | null;
           body: string;
           page?: number | null;
+          session_id?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["chapter_notes"]["Insert"]>;
+        Relationships: [];
+      };
+      highlights: {
+        Row: {
+          id: string;
+          review_id: string;
+          body: string;
+          page: number | null;
+          source: string;
+          position: number | null;
+          session_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          review_id: string;
+          body: string;
+          page?: number | null;
+          source?: string;
+          position?: number | null;
+          session_id?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["highlights"]["Insert"]>;
+        Relationships: [];
+      };
+      reading_sessions: {
+        Row: {
+          id: string;
+          review_id: string;
+          user_id: string;
+          mode: ReadingMode;
+          started_at: string;
+          ended_at: string | null;
+          duration_seconds: number | null;
+        };
+        Insert: {
+          id?: string;
+          review_id: string;
+          user_id: string;
+          mode?: ReadingMode;
+          started_at?: string;
+          ended_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["reading_sessions"]["Insert"]>;
+        Relationships: [];
+      };
+      chat_messages: {
+        Row: {
+          id: string;
+          review_id: string;
+          user_id: string;
+          role: "user" | "assistant" | "system";
+          content: string;
+          mode: ReadingMode | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          review_id: string;
+          user_id: string;
+          role: "user" | "assistant" | "system";
+          content: string;
+          mode?: ReadingMode | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["chat_messages"]["Insert"]>;
+        Relationships: [];
+      };
+      review_share_tokens: {
+        Row: {
+          token: string;
+          review_id: string;
+          created_by: string;
+          expires_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          token: string;
+          review_id: string;
+          created_by: string;
+          expires_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["review_share_tokens"]["Insert"]>;
         Relationships: [];
       };
     };

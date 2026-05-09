@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, BookOpen, Lock } from "lucide-react";
+import { ChevronLeft, BookOpen, Lock, PlayCircle, ExternalLink } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,13 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { ShareMenu } from "@/components/share-menu";
+import { PublicToggle } from "@/components/public-toggle";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth-helpers";
-import type { ChapterNoteRow, ReviewDetailRow } from "@/lib/queries";
+import { getSiteUrl } from "@/lib/site";
+import type { ChapterNoteRow, HighlightRow, ReviewDetailRow } from "@/lib/queries";
 import {
   addChapterNoteAction,
   deleteReviewAction,
 } from "@/app/actions/reviews";
+import { startSessionAction } from "@/app/actions/sessions";
 
 const STATUS_LABEL: Record<string, string> = {
   reading: "Reading",
@@ -22,13 +26,15 @@ const STATUS_LABEL: Record<string, string> = {
   dnf: "Did not finish",
 };
 
-const MODE_LABEL: Record<string, string> = {
-  absorb: "Absorb",
-  study: "Study",
-  challenge: "Challenge",
-  apply: "Apply",
-  enjoy: "Enjoy",
-};
+const MODES = [
+  { id: "absorb", label: "Absorb" },
+  { id: "study", label: "Study" },
+  { id: "challenge", label: "Challenge" },
+  { id: "apply", label: "Apply" },
+  { id: "enjoy", label: "Enjoy" },
+] as const;
+
+const MODE_LABEL: Record<string, string> = Object.fromEntries(MODES.map((m) => [m.id, m.label]));
 
 export default async function ReviewPage({
   params,
@@ -39,27 +45,34 @@ export default async function ReviewPage({
   const { profile } = await requireUser();
   const supabase = await createClient();
 
-  const { data: review } = await supabase
-    .from("reviews")
-    .select(
-      "id, user_id, status, rating, liked, why, synopsis, reading_mode, is_public, updated_at, books(title, author, cover_url, year, slug)"
-    )
-    .eq("id", reviewId)
-    .returns<ReviewDetailRow[]>()
-    .maybeSingle();
+  const [{ data: review }, { data: notes }, { data: highlights }] = await Promise.all([
+    supabase
+      .from("reviews")
+      .select(
+        "id, user_id, status, rating, liked, why, synopsis, reading_mode, is_public, updated_at, books(title, author, cover_url, year, slug)"
+      )
+      .eq("id", reviewId)
+      .returns<ReviewDetailRow[]>()
+      .maybeSingle(),
+    supabase
+      .from("chapter_notes")
+      .select("id, label, body, page, created_at")
+      .eq("review_id", reviewId)
+      .order("created_at", { ascending: true })
+      .returns<ChapterNoteRow[]>(),
+    supabase
+      .from("highlights")
+      .select("id, body, page, source, created_at")
+      .eq("review_id", reviewId)
+      .order("created_at", { ascending: true })
+      .returns<HighlightRow[]>(),
+  ]);
 
   if (!review || review.user_id !== profile.id) notFound();
 
   const book = review.books;
-
-  const { data: notes } = await supabase
-    .from("chapter_notes")
-    .select("id, label, body, page, created_at")
-    .eq("review_id", reviewId)
-    .order("created_at", { ascending: true })
-    .returns<ChapterNoteRow[]>();
-
   const deleteThis = deleteReviewAction.bind(null, reviewId);
+  const siteUrl = getSiteUrl();
 
   return (
     <AppShell handle={profile.handle}>
@@ -102,8 +115,49 @@ export default async function ReviewPage({
                 {book.year ? ` · ${book.year}` : ""}
               </p>
             )}
+            <div className="mt-4">
+              <Link
+                href={`/r/${review.id}`}
+                className="inline-flex items-center gap-1 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+              >
+                Public view <ExternalLink className="size-3" />
+              </Link>
+            </div>
           </div>
         </header>
+
+        <Section title="Reading session">
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-sm text-[var(--muted-foreground)]">
+                Pick a mode and capture highlights as you read.
+              </p>
+              <form action={startSessionAction} className="mt-3 space-y-3">
+                <input type="hidden" name="reviewId" value={review.id} />
+                <div className="flex flex-wrap gap-2">
+                  {MODES.map((m) => (
+                    <label
+                      key={m.id}
+                      className="cursor-pointer rounded-full border border-[var(--border)] px-3 py-1 text-sm has-[:checked]:border-[var(--ring)] has-[:checked]:bg-[var(--accent)]/30"
+                    >
+                      <input
+                        type="radio"
+                        name="mode"
+                        value={m.id}
+                        defaultChecked={review.reading_mode === m.id}
+                        className="sr-only"
+                      />
+                      {m.label}
+                    </label>
+                  ))}
+                </div>
+                <Button type="submit">
+                  <PlayCircle className="size-4" /> Start session
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </Section>
 
         {review.why && (
           <Section title="Why">
@@ -115,6 +169,29 @@ export default async function ReviewPage({
             <p className="whitespace-pre-wrap leading-relaxed">{review.synopsis}</p>
           </Section>
         )}
+
+        <Section title="Highlights">
+          {highlights && highlights.length > 0 ? (
+            <ul className="space-y-3">
+              {highlights.map((h) => (
+                <li key={h.id}>
+                  <Card>
+                    <CardContent className="p-4">
+                      <p className="prose-quote text-base">&ldquo;{h.body}&rdquo;</p>
+                      {h.page != null && (
+                        <p className="mt-2 text-xs text-[var(--muted-foreground)]">p. {h.page}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-[var(--muted-foreground)]">
+              No highlights yet — start a session above to capture some.
+            </p>
+          )}
+        </Section>
 
         <Section title="Chapter notes">
           {notes && notes.length > 0 ? (
@@ -159,6 +236,19 @@ export default async function ReviewPage({
               Add note
             </Button>
           </form>
+        </Section>
+
+        <Section title="Share">
+          <div className="space-y-4 rounded-md border border-[var(--border)] bg-[var(--card)] p-4">
+            <PublicToggle reviewId={review.id} initialIsPublic={review.is_public} />
+            <ShareMenu
+              reviewId={review.id}
+              isPublic={review.is_public}
+              siteUrl={siteUrl}
+              bookTitle={book?.title ?? "Untitled"}
+              authorHandle={profile.handle}
+            />
+          </div>
         </Section>
 
         <div className="mt-12 flex items-center justify-between border-t border-[var(--border)] pt-6">

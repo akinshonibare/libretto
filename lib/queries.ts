@@ -72,3 +72,43 @@ export type BookPageReviewRow = {
     display_name: string | null;
   } | null;
 };
+
+export type PublicReviewRow = {
+  id: string;
+  user_id: string;
+  status: ReadingStatus;
+  rating: number | null;
+  liked: boolean | null;
+  why: string | null;
+  synopsis: string | null;
+  reading_mode: ReadingMode;
+  is_public: boolean;
+  updated_at: string;
+  books: {
+    title: string;
+    author: string | null;
+    cover_url: string | null;
+    year: number | null;
+    slug: string;
+  } | null;
+  profiles: {
+    handle: string;
+    display_name: string | null;
+  } | null;
+};
+
+export type HighlightRow = {
+  id: string;
+  body: string;
+  page: number | null;
+  source: string;
+  created_at: string;
+};
+
+export type SessionRow = {
+  id: string;
+  mode: ReadingMode;
+  started_at: string;
+  ended_at: string | null;
+  duration_seconds: number | null;
+};
