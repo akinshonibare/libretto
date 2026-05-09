@@ -4,7 +4,9 @@ import { BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { SiteHeader } from "@/components/site-header";
+import { FollowButton } from "@/components/follow-button";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionContext } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
 import type { PublicProfileReviewRow } from "@/lib/queries";
 
@@ -42,24 +44,62 @@ export default async function PublicProfilePage({
 
   if (!profile) notFound();
 
-  const { data: reviews } = await supabase
-    .from("reviews")
-    .select("id, status, rating, books(title, author, cover_url, slug)")
-    .eq("user_id", profile.id)
-    .eq("is_public", true)
-    .order("updated_at", { ascending: false })
-    .returns<PublicProfileReviewRow[]>();
+  const { user: viewer } = await getSessionContext();
+  const isSelf = viewer?.id === profile.id;
+
+  const [{ data: reviews }, { data: followCheck }, { count: followerCount }, { count: followingCount }] =
+    await Promise.all([
+      supabase
+        .from("reviews")
+        .select("id, status, rating, books(title, author, cover_url, slug)")
+        .eq("user_id", profile.id)
+        .eq("is_public", true)
+        .order("updated_at", { ascending: false })
+        .returns<PublicProfileReviewRow[]>(),
+      viewer && !isSelf
+        ? supabase
+            .from("follows")
+            .select("follower_id")
+            .eq("follower_id", viewer.id)
+            .eq("followee_id", profile.id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      supabase
+        .from("follows")
+        .select("follower_id", { count: "exact", head: true })
+        .eq("followee_id", profile.id),
+      supabase
+        .from("follows")
+        .select("followee_id", { count: "exact", head: true })
+        .eq("follower_id", profile.id),
+    ]);
+
+  const isFollowing = !!followCheck;
 
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <main className="mx-auto w-full max-w-4xl px-6 py-10">
-        <header>
-          <p className="text-sm text-[var(--muted-foreground)]">@{profile.handle}</p>
-          <h1 className="mt-1 font-heading text-4xl tracking-tight">
-            {profile.display_name ?? profile.handle}
-          </h1>
-          {profile.bio && <p className="mt-2 text-[var(--muted-foreground)]">{profile.bio}</p>}
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-[var(--muted-foreground)]">@{profile.handle}</p>
+            <h1 className="mt-1 font-heading text-4xl tracking-tight">
+              {profile.display_name ?? profile.handle}
+            </h1>
+            {profile.bio && <p className="mt-2 text-[var(--muted-foreground)]">{profile.bio}</p>}
+            <p className="mt-3 text-xs text-[var(--muted-foreground)]">
+              {followerCount ?? 0} follower{(followerCount ?? 0) === 1 ? "" : "s"} ·{" "}
+              {followingCount ?? 0} following
+            </p>
+          </div>
+          {viewer && (
+            <FollowButton
+              targetUserId={profile.id}
+              targetHandle={profile.handle}
+              isFollowing={isFollowing}
+              isSelf={isSelf}
+            />
+          )}
         </header>
 
       <h2 className="mt-10 font-heading text-xl">Public reading</h2>

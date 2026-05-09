@@ -267,6 +267,90 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["library_heart"]["Insert"]>;
         Relationships: [];
       };
+      follows: {
+        Row: { follower_id: string; followee_id: string; created_at: string };
+        Insert: { follower_id: string; followee_id: string; created_at?: string };
+        Update: Partial<Database["public"]["Tables"]["follows"]["Insert"]>;
+        Relationships: [];
+      };
+      reactions: {
+        Row: {
+          id: string;
+          user_id: string;
+          target_type: "review" | "highlight";
+          target_id: string;
+          kind: "star" | "this_hit" | "bookmark";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          target_type: "review" | "highlight";
+          target_id: string;
+          kind: "star" | "this_hit" | "bookmark";
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["reactions"]["Insert"]>;
+        Relationships: [];
+      };
+      clubs: {
+        Row: {
+          id: string;
+          slug: string;
+          name: string;
+          description: string | null;
+          owner_id: string;
+          is_private: boolean;
+          current_book_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          slug: string;
+          name: string;
+          description?: string | null;
+          owner_id: string;
+          is_private?: boolean;
+          current_book_id?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["clubs"]["Insert"]>;
+        Relationships: [];
+      };
+      club_members: {
+        Row: { club_id: string; user_id: string; role: "owner" | "member"; joined_at: string };
+        Insert: { club_id: string; user_id: string; role?: "owner" | "member"; joined_at?: string };
+        Update: Partial<Database["public"]["Tables"]["club_members"]["Insert"]>;
+        Relationships: [];
+      };
+      club_messages: {
+        Row: { id: string; club_id: string; user_id: string; body: string; created_at: string };
+        Insert: { id?: string; club_id: string; user_id: string; body: string; created_at?: string };
+        Update: Partial<Database["public"]["Tables"]["club_messages"]["Insert"]>;
+        Relationships: [];
+      };
+      reports: {
+        Row: {
+          id: string;
+          reporter_id: string;
+          target_type: string;
+          target_id: string;
+          reason: string;
+          status: "open" | "closed" | "actioned";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          reporter_id: string;
+          target_type: string;
+          target_id: string;
+          reason: string;
+          status?: "open" | "closed" | "actioned";
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["reports"]["Insert"]>;
+        Relationships: [];
+      };
       concepts: {
         Row: {
           id: string;

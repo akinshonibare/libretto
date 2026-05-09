@@ -5,9 +5,14 @@ import { BookOpen, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { SiteHeader } from "@/components/site-header";
+import { ReactionsBar } from "@/components/reactions-bar";
+import { ReportButton } from "@/components/report-button";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site";
+import { getSessionContext } from "@/lib/auth-helpers";
 import type { HighlightRow, PublicReviewRow } from "@/lib/queries";
+
+type ReactionRow = { kind: "star" | "this_hit" | "bookmark"; user_id: string };
 
 const STATUS_LABEL: Record<string, string> = {
   reading: "Reading",
@@ -115,6 +120,24 @@ export default async function PublicReviewPage({
   const book = review.books;
   const author = review.profiles;
 
+  const supabase = await createClient();
+  const { user: viewer } = await getSessionContext();
+
+  const { data: reactionRows } = await supabase
+    .from("reactions")
+    .select("kind, user_id")
+    .eq("target_type", "review")
+    .eq("target_id", review.id)
+    .returns<ReactionRow[]>();
+
+  const counts = { star: 0, this_hit: 0, bookmark: 0 };
+  const active = { star: false, this_hit: false, bookmark: false };
+  for (const r of reactionRows ?? []) {
+    counts[r.kind] = (counts[r.kind] ?? 0) + 1;
+    if (viewer && r.user_id === viewer.id) active[r.kind] = true;
+  }
+  const canonicalPath = `/r/${review.id}${t ? `?t=${t}` : ""}`;
+
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
@@ -158,6 +181,19 @@ export default async function PublicReviewPage({
           </p>
         </div>
       </header>
+
+      {viewer && (
+        <section className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <ReactionsBar
+            targetType="review"
+            targetId={review.id}
+            counts={counts}
+            active={active}
+            redirectTo={canonicalPath}
+          />
+          <ReportButton targetType="review" targetId={review.id} redirectTo={canonicalPath} />
+        </section>
+      )}
 
       {review.why && (
         <section className="mt-8">
