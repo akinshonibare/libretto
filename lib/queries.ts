@@ -1,7 +1,9 @@
 // Result row types for the queries we actually run.
-// Supabase's typed client falls back to `never` for nested selects when the placeholder
-// Database type doesn't include Relationships. Until we run `supabase gen types` against
-// the live project, we hand-write the result shapes and apply them via `.returns<T>()`.
+// The hand-written Database type in lib/supabase/types.ts doesn't model the
+// foreign-key Relationships field, so the typed client narrows nested selects
+// to `never`. Each row type below maps to an exact `.select(...)` shape and
+// is applied via `.returns<T>()` to restore type safety.
+// (See lib/supabase/types.ts header for why we hand-author types.)
 
 import type { ReadingMode, ReadingStatus } from "@/lib/supabase/types";
 

@@ -65,7 +65,10 @@ export default async function DashboardPage() {
   return (
     <AppShell handle={profile.handle}>
       <div className="mx-auto max-w-5xl px-6 py-10">
-        <div className="flex items-end justify-between gap-4">
+        <p className="prose-quote text-base leading-snug">
+          A small, humble place for the books you read.
+        </p>
+        <div className="mt-6 flex items-end justify-between gap-4">
           <div>
             <p className="text-sm text-[var(--muted-foreground)]">@{profile.handle}</p>
             <h1 className="mt-1 font-heading text-4xl tracking-tight">Welcome back</h1>

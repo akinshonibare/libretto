@@ -220,7 +220,39 @@ const MessageInput = z.object({
   body: z.string().min(1).max(2000),
 });
 
-const PROFANITY = /\b(slur1|slur2)\b/i; // placeholder — replace with a real list when one is provided.
+/**
+ * Spam heuristics for club messages. We do NOT word-filter for slurs —
+ * maintaining a curated list at the application layer creates more harm than
+ * it prevents (it's incomplete, embeds offensive content in the codebase, and
+ * misses every variant). Moderation lives in three layers instead:
+ *
+ *   1. RLS gates posting to club members only (migration 0007).
+ *   2. Rate limit (1 message per 2 seconds per user) prevents floods.
+ *   3. Reports table — any user can flag a message; reviewers triage.
+ *
+ * What this function does block: structural spam — link bombs, emoji walls,
+ * stuck-key garbage. The signal-to-noise on these patterns is high; they're
+ * almost never legitimate prose.
+ */
+function looksLikeSpam(body: string): boolean {
+  const trimmed = body.trim();
+  if (trimmed.length < 1) return true;
+
+  // 4+ http/https URLs in one message → almost always spam.
+  const urlMatches = trimmed.match(/https?:\/\/\S+/gi);
+  if (urlMatches && urlMatches.length >= 4) return true;
+
+  // 8+ of the same character in a row (e.g. "aaaaaaaa", "!!!!!!!!").
+  if (/(.)\1{7,}/.test(trimmed)) return true;
+
+  // Mostly non-alphanumeric (>60% punctuation) and longer than 30 chars.
+  if (trimmed.length > 30) {
+    const alphanumChars = trimmed.replace(/[^\p{L}\p{N}]/gu, "").length;
+    if (alphanumChars / trimmed.length < 0.4) return true;
+  }
+
+  return false;
+}
 
 export async function postClubMessageAction(formData: FormData): Promise<void> {
   const supabase = await createClient();
@@ -236,7 +268,7 @@ export async function postClubMessageAction(formData: FormData): Promise<void> {
   });
   if (!parsed.success) return;
 
-  if (PROFANITY.test(parsed.data.body)) return;
+  if (looksLikeSpam(parsed.data.body)) return;
 
   // Rate limit: 1 message per 2 seconds per user.
   const twoSecondsAgo = new Date(Date.now() - 2000).toISOString();
