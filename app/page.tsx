@@ -1,65 +1,110 @@
-import Image from "next/image";
+import Link from "next/link";
+import { BookOpen, Sparkles, Network, Share2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="flex flex-col flex-1">
+      <header className="border-b border-[var(--border)]">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+          <Link href="/" className="font-heading text-2xl tracking-tight">
+            Libretto
+          </Link>
+          <nav className="flex items-center gap-2">
+            <Link href="/settings">
+              <Button variant="ghost" size="sm">
+                Theme
+              </Button>
+            </Link>
+            <Link href="/auth/sign-in">
+              <Button size="sm">Sign in</Button>
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      <main className="flex-1">
+        <section className="mx-auto max-w-5xl px-6 py-24">
+          <p className="mb-4 text-sm uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
+            Your little book
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+          <h1 className="font-heading text-5xl leading-[1.05] tracking-tight md:text-7xl">
+            A small, humble place
+            <br /> for the books you read.
+          </h1>
+          <p className="mt-6 max-w-xl text-lg text-[var(--muted-foreground)]">
+            Capture reviews, highlights, and chapter notes. Resurface ideas at the right time. See
+            how your reading connects across books — and share what hits.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/auth/sign-in">
+              <Button size="lg">Start a journal</Button>
+            </Link>
+            <Link href="/settings">
+              <Button size="lg" variant="outline">
+                Pick a theme
+              </Button>
+            </Link>
+          </div>
+        </section>
+
+        <section className="border-t border-[var(--border)] bg-[var(--card)]/40">
+          <div className="mx-auto grid max-w-5xl gap-6 px-6 py-16 md:grid-cols-2">
+            <Feature
+              icon={<BookOpen className="size-5" />}
+              title="Capture as you read"
+              body="Title, status, why you liked or didn't, your synopsis, intriguing chapters. Search OpenLibrary or add manually."
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+            <Feature
+              icon={<Share2 className="size-5" />}
+              title="Share, beautifully"
+              body="Tweet-style image cards plus a canonical link to your review. Send to a story or a thread, your call."
+            />
+            <Feature
+              icon={<Sparkles className="size-5" />}
+              title="Resurface what matters"
+              body="Spaced-repetition pulls old highlights back at the right moment. Streaks and badges keep the habit alive."
+            />
+            <Feature
+              icon={<Network className="size-5" />}
+              title="Your mind, mapped"
+              body="Concepts auto-link across your reading. See ideas you've connected — and ones you didn't notice were related."
+            />
+          </div>
+        </section>
       </main>
+
+      <footer className="border-t border-[var(--border)]">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6 text-sm text-[var(--muted-foreground)]">
+          <span>Libretto · little book, big notes</span>
+          <Link href="/settings" className="hover:underline">
+            Theme settings
+          </Link>
+        </div>
+      </footer>
     </div>
+  );
+}
+
+function Feature({
+  icon,
+  title,
+  body,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+}) {
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="mb-3 inline-flex size-9 items-center justify-center rounded-md bg-[var(--accent)] text-[var(--accent-foreground)]">
+          {icon}
+        </div>
+        <h3 className="font-heading text-xl">{title}</h3>
+        <p className="mt-2 text-sm text-[var(--muted-foreground)]">{body}</p>
+      </CardContent>
+    </Card>
   );
 }
