@@ -131,15 +131,25 @@ export default async function LibraryPage() {
                           </div>
                         )}
                         <div className="flex min-w-0 flex-1 flex-col">
+                          {/* Two stable rows so the title sits at the same y-position across
+                              cards regardless of badge widths or whether there's a rating. */}
                           <div className="flex flex-wrap items-center gap-1.5 text-xs">
                             <Badge variant="outline">{STATUS_LABEL[r.status] ?? r.status}</Badge>
                             <Badge variant="secondary">{MODE_LABEL[r.reading_mode]}</Badge>
-                            {r.rating && (
-                              <span className="text-[var(--muted-foreground)]">
-                                {"★".repeat(r.rating)}
-                              </span>
-                            )}
                             {!r.is_public && <Badge variant="outline">Private</Badge>}
+                          </div>
+                          <div
+                            className="mt-1 text-xs leading-none text-[var(--muted-foreground)]"
+                            aria-label={
+                              r.rating ? `Rated ${r.rating} out of 5` : "Not rated"
+                            }
+                          >
+                            <span className="text-[var(--foreground)]">
+                              {"★".repeat(r.rating ?? 0)}
+                            </span>
+                            <span className="opacity-40">
+                              {"★".repeat(5 - (r.rating ?? 0))}
+                            </span>
                           </div>
                           <p className="mt-1.5 line-clamp-2 font-heading text-lg leading-tight">
                             {book?.title ?? "Untitled"}
