@@ -267,6 +267,28 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["library_heart"]["Insert"]>;
         Relationships: [];
       };
+      ai_usage: {
+        Row: {
+          user_id: string;
+          day: string;
+          provider: string;
+          model: string;
+          input_tokens: number;
+          output_tokens: number;
+          estimated_cost_cents: number;
+        };
+        Insert: {
+          user_id: string;
+          day?: string;
+          provider: string;
+          model: string;
+          input_tokens?: number;
+          output_tokens?: number;
+          estimated_cost_cents?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["ai_usage"]["Insert"]>;
+        Relationships: [];
+      };
       resurface_schedule: {
         Row: {
           highlight_id: string;

@@ -10,9 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ShareMenu } from "@/components/share-menu";
 import { PublicToggle } from "@/components/public-toggle";
+import { SocraticChat } from "@/components/socratic-chat";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth-helpers";
 import { getSiteUrl } from "@/lib/site";
+import { isAnthropicConfigured } from "@/lib/ai/anthropic";
 import type { ChapterNoteRow, HighlightRow, ReviewDetailRow } from "@/lib/queries";
 import {
   addChapterNoteAction,
@@ -45,7 +47,7 @@ export default async function ReviewPage({
   const { profile } = await requireUser();
   const supabase = await createClient();
 
-  const [{ data: review }, { data: notes }, { data: highlights }] = await Promise.all([
+  const [{ data: review }, { data: notes }, { data: highlights }, { data: chatHistory }] = await Promise.all([
     supabase
       .from("reviews")
       .select(
@@ -66,6 +68,13 @@ export default async function ReviewPage({
       .eq("review_id", reviewId)
       .order("created_at", { ascending: true })
       .returns<HighlightRow[]>(),
+    supabase
+      .from("chat_messages")
+      .select("role, content")
+      .eq("review_id", reviewId)
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: true })
+      .limit(20),
   ]);
 
   if (!review || review.user_id !== profile.id) notFound();
@@ -236,6 +245,19 @@ export default async function ReviewPage({
               Add note
             </Button>
           </form>
+        </Section>
+
+        <Section title="Socratic chat">
+          <SocraticChat
+            reviewId={review.id}
+            initialMode={review.reading_mode}
+            configured={isAnthropicConfigured()}
+            initialMessages={(chatHistory ?? [])
+              .filter((m): m is { role: "user" | "assistant"; content: string } =>
+                m.role === "user" || m.role === "assistant"
+              )
+              .map((m) => ({ role: m.role, content: m.content }))}
+          />
         </Section>
 
         <Section title="Share">
