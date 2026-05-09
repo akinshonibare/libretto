@@ -329,6 +329,54 @@
   --ink-quote: oklch(0.85 0.05 95);
 }
 
+/* ---------- Palette: Midnight Library (hidden — easter egg) ---------- */
+[data-palette="midnight-library"] {
+  --paper: oklch(0.18 0.04 270);
+  --background: var(--paper);
+  --foreground: oklch(0.94 0.04 90);
+  --card: oklch(0.22 0.05 270);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.82 0.14 85);
+  --primary-foreground: oklch(0.16 0.04 270);
+  --secondary: oklch(0.26 0.05 270);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.24 0.04 270);
+  --muted-foreground: oklch(0.72 0.04 90);
+  --accent: oklch(0.82 0.14 85);
+  --accent-foreground: oklch(0.16 0.04 270);
+  --destructive: oklch(0.65 0.22 25);
+  --border: oklch(0.32 0.05 270);
+  --input: var(--border);
+  --ring: oklch(0.82 0.14 85);
+  --highlight: oklch(0.55 0.15 85);
+  --ink-quote: oklch(0.88 0.05 90);
+}
+[data-palette="midnight-library"].dark {
+  --paper: oklch(0.13 0.04 270);
+  --background: var(--paper);
+  --foreground: oklch(0.94 0.04 90);
+  --card: oklch(0.18 0.05 270);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.85 0.14 85);
+  --primary-foreground: oklch(0.13 0.04 270);
+  --secondary: oklch(0.22 0.05 270);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.2 0.04 270);
+  --muted-foreground: oklch(0.74 0.04 90);
+  --accent: oklch(0.85 0.14 85);
+  --accent-foreground: oklch(0.13 0.04 270);
+  --destructive: oklch(0.65 0.22 25);
+  --border: oklch(0.28 0.05 270);
+  --input: var(--border);
+  --ring: oklch(0.85 0.14 85);
+  --highlight: oklch(0.55 0.15 85);
+  --ink-quote: oklch(0.9 0.05 90);
+}
+
 /* ---------- Type pairings ---------- */
 [data-type="mixed"] {
   --font-heading: var(--font-display);
@@ -496,3 +544,51 @@ mark, .highlight {
 .chat-prose h2 { font-size: 1em; }
 .chat-prose h3, .chat-prose h4 { font-size: 0.95em; }
 .chat-prose a { text-decoration: underline; text-underline-offset: 2px; }
+
+/* Easter-egg reveal: full-screen flash + zoomed serif quote, then dissolves
+ * to expose whatever palette was just swapped underneath. */
+.easter-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: oklch(0.1 0.04 270);
+  pointer-events: none;
+  animation: easter-reveal-fade 2400ms ease-in-out forwards;
+}
+.easter-reveal-quote {
+  max-width: 32rem;
+  margin: 0;
+  padding: 0 2rem;
+  text-align: center;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.75rem, 6vw, 3.25rem);
+  line-height: 1.2;
+  color: oklch(0.85 0.14 85);
+  animation: easter-reveal-quote 2400ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+@keyframes easter-reveal-fade {
+  0% { opacity: 0; }
+  8% { opacity: 1; }
+  78% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes easter-reveal-quote {
+  0% { transform: scale(0.55); opacity: 0; letter-spacing: 0.45em; }
+  18% { transform: scale(1); opacity: 1; letter-spacing: -0.005em; }
+  78% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.06); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .easter-reveal { animation-duration: 1200ms; }
+  .easter-reveal-quote {
+    animation: none;
+    transform: none;
+    opacity: 1;
+    letter-spacing: normal;
+  }
+}

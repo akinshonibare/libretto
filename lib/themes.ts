@@ -4,7 +4,8 @@ export type ThemePalette =
   | "marginalia"
   | "velluto"
   | "risograph"
-  | "greenroom";
+  | "greenroom"
+  | "midnight-library";
 
 export type ThemeMode = "light" | "dark" | "system";
 
@@ -65,8 +66,10 @@ export const TYPES: Array<{ id: ThemeType; name: string; description: string }> 
   { id: "sans", name: "Sans", description: "Modern, neutral throughout." },
 ];
 
+const HIDDEN_PALETTES: ThemePalette[] = ["midnight-library"];
+
 export function isPalette(value: string | null | undefined): value is ThemePalette {
-  return PALETTES.some((p) => p.id === value);
+  return PALETTES.some((p) => p.id === value) || HIDDEN_PALETTES.includes(value as ThemePalette);
 }
 
 export function isMode(value: string | null | undefined): value is ThemeMode {
