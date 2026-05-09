@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { BookOpen, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { SiteHeader } from "@/components/site-header";
 import { ReactionsBar } from "@/components/reactions-bar";
 import { ReportButton } from "@/components/report-button";
+import { ReviewShareCard } from "@/components/review-share-card";
+import { CopyLinkButton } from "@/components/copy-link-button";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site";
 import { getSessionContext } from "@/lib/auth-helpers";
@@ -138,93 +139,95 @@ export default async function PublicReviewPage({
   }
   const canonicalPath = `/r/${review.id}${t ? `?t=${t}` : ""}`;
 
+  const siteUrl = getSiteUrl();
+  let siteHost = siteUrl.replace(/^https?:\/\//, "");
+  siteHost = siteHost.replace(/\/$/, "");
+
+  // Pick the longest highlight as the featured quote — usually the most worth pulling.
+  const featuredQuote =
+    highlights.length > 0
+      ? [...highlights].sort((a, b) => b.body.length - a.body.length)[0].body
+      : null;
+  const otherHighlights = featuredQuote
+    ? highlights.filter((h) => h.body !== featuredQuote)
+    : [];
+
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <main className="mx-auto w-full max-w-3xl px-6 py-10">
-        <header className="flex gap-6">
-        {book?.cover_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={book.cover_url}
-            alt=""
-            className="h-44 w-28 shrink-0 rounded-sm border border-[var(--border)] object-cover"
-          />
-        ) : (
-          <div className="flex h-44 w-28 shrink-0 items-center justify-center rounded-sm border border-[var(--border)] bg-[var(--muted)]">
-            <BookOpen className="size-6 text-[var(--muted-foreground)]" />
-          </div>
+        <p className="label-eyebrow">@{author?.handle}&rsquo;s review</p>
+
+        {!review.is_public && (
+          <Badge variant="outline" className="mt-3 gap-1">
+            <Lock className="size-3" /> Unlisted — visible only via this link
+          </Badge>
         )}
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5 text-xs">
-            <Badge variant="outline">{STATUS_LABEL[review.status] ?? review.status}</Badge>
-            {review.rating && <Badge variant="accent">{"★".repeat(review.rating)}</Badge>}
-            <Badge variant="secondary">{MODE_LABEL[review.reading_mode]}</Badge>
-            {!review.is_public && (
-              <Badge variant="outline" className="gap-1">
-                <Lock className="size-3" /> Unlisted
-              </Badge>
-            )}
-          </div>
-          <h1 className="mt-2 font-heading text-3xl tracking-tight">{book?.title ?? "Untitled"}</h1>
-          {book?.author && (
-            <p className="text-[var(--muted-foreground)]">
-              {book.author}
-              {book.year ? ` · ${book.year}` : ""}
-            </p>
-          )}
-          <p className="mt-3 text-sm text-[var(--muted-foreground)]">
-            Notes by{" "}
-            <Link href={`/u/${author?.handle ?? ""}`} className="font-medium hover:underline">
-              @{author?.handle}
-            </Link>
-          </p>
-        </div>
-      </header>
 
-      {viewer && (
-        <section className="mt-6 flex flex-wrap items-center justify-between gap-3">
-          <ReactionsBar
-            targetType="review"
-            targetId={review.id}
-            counts={counts}
-            active={active}
-            redirectTo={canonicalPath}
+        <div className="mt-4">
+          <ReviewShareCard
+            bookTitle={book?.title ?? "Untitled"}
+            bookAuthor={book?.author ?? null}
+            bookYear={book?.year ?? null}
+            bookCoverUrl={book?.cover_url ?? null}
+            rating={review.rating}
+            readingModeLabel={MODE_LABEL[review.reading_mode] ?? review.reading_mode}
+            statusLabel={STATUS_LABEL[review.status] ?? review.status}
+            featuredQuote={featuredQuote}
+            body={review.why}
+            authorHandle={author?.handle ?? "reader"}
+            authorDisplayName={author?.display_name ?? null}
+            siteHost={siteHost}
           />
-          <ReportButton targetType="review" targetId={review.id} redirectTo={canonicalPath} />
-        </section>
-      )}
+        </div>
 
-      {review.why && (
-        <section className="mt-8">
-          <h2 className="font-heading text-xl mb-3">Why</h2>
-          <p className="whitespace-pre-wrap leading-relaxed">{review.why}</p>
-        </section>
-      )}
-      {review.synopsis && (
-        <section className="mt-8">
-          <h2 className="font-heading text-xl mb-3">Synopsis</h2>
-          <p className="whitespace-pre-wrap leading-relaxed">{review.synopsis}</p>
-        </section>
-      )}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <CopyLinkButton url={`${siteUrl}${canonicalPath}`} />
+          <Link
+            href={`/u/${author?.handle ?? ""}`}
+            className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] underline-offset-4 hover:underline"
+          >
+            More from @{author?.handle} →
+          </Link>
+        </div>
 
-        {highlights.length > 0 && (
-          <section className="mt-8">
-            <h2 className="font-heading text-xl mb-3">Highlights</h2>
-            <ul className="space-y-3">
-              {highlights.map((h) => (
-                <li key={h.id}>
-                  <Card>
-                    <CardContent className="p-4">
-                      <p className="prose-quote text-base">&ldquo;{h.body}&rdquo;</p>
-                      {h.page != null && (
-                        <p className="mt-2 text-xs text-[var(--muted-foreground)]">p. {h.page}</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </li>
+        <p className="mt-2 text-center text-xs text-[var(--muted-foreground)]">
+          One review, one beautiful card. <span className="text-[var(--foreground)]">{siteHost}{canonicalPath}</span>
+        </p>
+
+        {viewer && (
+          <section className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] pt-6">
+            <ReactionsBar
+              targetType="review"
+              targetId={review.id}
+              counts={counts}
+              active={active}
+              redirectTo={canonicalPath}
+            />
+            <ReportButton targetType="review" targetId={review.id} redirectTo={canonicalPath} />
+          </section>
+        )}
+
+        {review.synopsis && (
+          <section className="mt-10">
+            <p className="label-eyebrow">Synopsis</p>
+            <p className="mt-2 whitespace-pre-wrap leading-relaxed">{review.synopsis}</p>
+          </section>
+        )}
+
+        {otherHighlights.length > 0 && (
+          <section className="mt-10">
+            <p className="label-eyebrow">More highlights</p>
+            <div className="mt-3 space-y-4">
+              {otherHighlights.map((h) => (
+                <div key={h.id} className="marginalia-highlight">
+                  <p className="prose-quote text-base leading-relaxed">&ldquo;{h.body}&rdquo;</p>
+                  {h.page != null && (
+                    <p className="mt-1.5 text-xs text-[var(--muted-foreground)]">p. {h.page}</p>
+                  )}
+                </div>
               ))}
-            </ul>
+            </div>
           </section>
         )}
       </main>

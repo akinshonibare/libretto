@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { ShareMenu } from "@/components/share-menu";
 import { PublicToggle } from "@/components/public-toggle";
 import { SocraticChat } from "@/components/socratic-chat";
+import { Marginalia } from "@/components/marginalia";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth-helpers";
 import { getSiteUrl } from "@/lib/site";
@@ -179,53 +180,14 @@ export default async function ReviewPage({
           </Section>
         )}
 
-        <Section title="Highlights">
-          {highlights && highlights.length > 0 ? (
-            <ul className="space-y-3">
-              {highlights.map((h) => (
-                <li key={h.id}>
-                  <Card>
-                    <CardContent className="p-4">
-                      <p className="prose-quote text-base">&ldquo;{h.body}&rdquo;</p>
-                      {h.page != null && (
-                        <p className="mt-2 text-xs text-[var(--muted-foreground)]">p. {h.page}</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-[var(--muted-foreground)]">
-              No highlights yet — start a session above to capture some.
-            </p>
-          )}
-        </Section>
+        <Section title="Marginalia">
+          <Marginalia
+            highlights={highlights ?? []}
+            notes={notes ?? []}
+            emptyMessage="No marginalia yet — start a session above to capture highlights, or add a chapter note below."
+          />
 
-        <Section title="Chapter notes">
-          {notes && notes.length > 0 ? (
-            <ul className="space-y-3">
-              {notes.map((n) => (
-                <li key={n.id}>
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <p className="text-sm font-medium">{n.label || "Note"}</p>
-                        {n.page != null && (
-                          <p className="text-xs text-[var(--muted-foreground)]">p. {n.page}</p>
-                        )}
-                      </div>
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{n.body}</p>
-                    </CardContent>
-                  </Card>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-[var(--muted-foreground)]">No notes yet — add the first one below.</p>
-          )}
-
-          <form action={addChapterNoteAction} className="mt-4 space-y-3 rounded-md border border-[var(--border)] bg-[var(--card)] p-4">
+          <form action={addChapterNoteAction} className="mt-6 space-y-3 rounded-md border border-[var(--border)] bg-[var(--card)] p-4">
             <input type="hidden" name="reviewId" value={review.id} />
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2 space-y-1.5">

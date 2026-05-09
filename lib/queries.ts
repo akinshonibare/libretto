@@ -21,6 +21,11 @@ export type LibraryReviewRow = {
   } | null;
 };
 
+export type LibraryHighlightTeaser = {
+  review_id: string;
+  body: string;
+};
+
 export type ReviewDetailRow = {
   id: string;
   user_id: string;

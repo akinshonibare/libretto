@@ -397,3 +397,35 @@ mark, .highlight {
   padding: 0 0.15em;
   border-radius: 2px;
 }
+/* Section eyebrows — design system spec: 0.75rem uppercase, 0.2em tracking, muted ink */
+.label-eyebrow {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+/* Marginalia: highlight blocks with accent-color left border */
+.marginalia-highlight {
+  border-left: 2px solid var(--accent);
+  padding-left: 0.875rem;
+}
+/* Marginalia: chapter divider — italic display label + horizontal rule */
+.marginalia-chapter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.25rem 0 0.75rem;
+}
+.marginalia-chapter-label {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  flex: none;
+}
+.marginalia-chapter-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}

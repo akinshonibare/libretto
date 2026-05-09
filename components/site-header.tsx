@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signOutAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
+import { LogoMark } from "@/components/logo-mark";
 import { getSessionContext } from "@/lib/auth-helpers";
 
 /**
@@ -15,7 +16,11 @@ export async function SiteHeader() {
   return (
     <header className="border-b border-[var(--border)]">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <Link href={profile ? "/dashboard" : "/"} className="font-heading text-2xl tracking-tight">
+        <Link
+          href={profile ? "/dashboard" : "/"}
+          className="inline-flex items-center gap-2 font-heading text-2xl tracking-tight"
+        >
+          <LogoMark size={28} className="text-[var(--foreground)]" />
           Libretto
         </Link>
         <nav className="flex items-center gap-1 text-sm">
