@@ -157,6 +157,23 @@ export async function addChapterNoteAction(formData: FormData) {
   const parsed = ChapterNoteInput.safeParse(fdToObject(formData));
   if (!parsed.success) return;
 
+  // Dedupe: there are two chapter-note forms (review page and session page)
+  // wired to this action. Submitting from one then the other previously
+  // created two identical rows. Skip the insert if an equivalent note was
+  // saved in the last 60 seconds.
+  const sixtySecondsAgo = new Date(Date.now() - 60_000).toISOString();
+  const { data: dupes } = await supabase
+    .from("chapter_notes")
+    .select("id")
+    .eq("review_id", parsed.data.reviewId)
+    .eq("body", parsed.data.body)
+    .gte("created_at", sixtySecondsAgo)
+    .limit(1);
+  if (dupes && dupes.length > 0) {
+    revalidatePath(`/library/${parsed.data.reviewId}`);
+    return;
+  }
+
   const { error } = await supabase.from("chapter_notes").insert({
     review_id: parsed.data.reviewId,
     label: parsed.data.label || null,

@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -152,7 +153,20 @@ export async function joinClubAction(formData: FormData): Promise<void> {
 
   const clubId = formData.get("clubId");
   const slug = formData.get("slug");
+  const token = formData.get("token");
   if (typeof clubId !== "string") return;
+
+  // For private clubs you must hold a valid invite token; the join below
+  // would still succeed under base RLS (auth.uid() = user_id), but private
+  // clubs would be unfindable in the UI without a token, so we gate here too
+  // for symmetry with the read path.
+  if (typeof token === "string" && token.length > 0) {
+    const { data: ok } = await supabase.rpc("club_invite_token_valid", {
+      p_club_id: clubId,
+      p_token: token,
+    });
+    if (!ok) return;
+  }
 
   await supabase.from("club_members").upsert(
     { club_id: clubId, user_id: user.id, role: "member" },
@@ -161,6 +175,56 @@ export async function joinClubAction(formData: FormData): Promise<void> {
 
   revalidatePath("/clubs");
   if (typeof slug === "string") revalidatePath(`/clubs/${slug}`);
+}
+
+/**
+ * Mint (or reuse) an invite token for a private club. Mirrors
+ * getOrCreateShareTokenAction for reviews.
+ */
+function generateInviteToken(): string {
+  return randomBytes(18).toString("base64url");
+}
+
+export async function getOrCreateClubInviteTokenAction(
+  clubId: string
+): Promise<string | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  // Only the owner can mint tokens (RLS enforces this on insert too).
+  const { data: club } = await supabase
+    .from("clubs")
+    .select("owner_id, slug")
+    .eq("id", clubId)
+    .maybeSingle();
+  if (!club || club.owner_id !== user.id) return null;
+
+  // Reuse the most recent active token to keep links stable across reloads.
+  const { data: existing } = await supabase
+    .from("club_invite_tokens")
+    .select("token")
+    .eq("club_id", clubId)
+    .is("revoked_at", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (existing?.token) return existing.token;
+
+  const token = generateInviteToken();
+  const { error } = await supabase.from("club_invite_tokens").insert({
+    token,
+    club_id: clubId,
+    created_by: user.id,
+  });
+  if (error) {
+    console.error("[clubInviteToken]", error);
+    return null;
+  }
+  revalidatePath(`/clubs/${club.slug}`);
+  return token;
 }
 
 export async function leaveClubAction(formData: FormData): Promise<void> {

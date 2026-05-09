@@ -333,6 +333,24 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["club_messages"]["Insert"]>;
         Relationships: [];
       };
+      club_invite_tokens: {
+        Row: {
+          token: string;
+          club_id: string;
+          created_by: string;
+          created_at: string;
+          revoked_at: string | null;
+        };
+        Insert: {
+          token: string;
+          club_id: string;
+          created_by: string;
+          created_at?: string;
+          revoked_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["club_invite_tokens"]["Insert"]>;
+        Relationships: [];
+      };
       reports: {
         Row: {
           id: string;
@@ -490,6 +508,48 @@ export type Database = {
           book_title: string | null;
           book_author: string | null;
           author_handle: string | null;
+        }>;
+      };
+      club_invite_token_valid: {
+        Args: { p_club_id: string; p_token: string };
+        Returns: boolean;
+      };
+      club_for_invite: {
+        Args: { p_slug: string; p_token?: string | null };
+        Returns: Array<{
+          id: string;
+          slug: string;
+          name: string;
+          description: string | null;
+          owner_id: string;
+          is_private: boolean;
+          current_book_id: string | null;
+          created_at: string;
+          book_title: string | null;
+          book_author: string | null;
+          book_cover_url: string | null;
+          book_slug: string | null;
+        }>;
+      };
+      club_members_for_invite: {
+        Args: { p_club_id: string; p_token?: string | null };
+        Returns: Array<{
+          user_id: string;
+          role: "owner" | "member";
+          handle: string | null;
+          display_name: string | null;
+          joined_at: string;
+        }>;
+      };
+      club_messages_for_invite: {
+        Args: { p_club_id: string; p_token?: string | null };
+        Returns: Array<{
+          id: string;
+          body: string;
+          created_at: string;
+          user_id: string;
+          handle: string | null;
+          display_name: string | null;
         }>;
       };
     };

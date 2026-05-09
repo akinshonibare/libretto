@@ -26,6 +26,8 @@ type Props = { data: GraphData };
 
 export function GraphCanvas({ data }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fgRef = useRef<any>(null);
   const [size, setSize] = useState({ w: 800, h: 560 });
   const [selected, setSelected] = useState<GraphNode | null>(null);
   const [highlights, setHighlights] = useState<ConceptHighlight[] | null>(null);
@@ -47,6 +49,21 @@ export function GraphCanvas({ data }: Props) {
     }),
     [data]
   );
+
+  // Tune force simulation so labels don't pile up:
+  //  - stronger repulsion (charge) pushes nodes apart
+  //  - longer link distance gives connected concepts more room
+  //  - lower velocityDecay lets nodes drift further before settling
+  // Re-run on every graph change so newly added nodes get re-laid-out.
+  useEffect(() => {
+    const fg = fgRef.current;
+    if (!fg || data.nodes.length === 0) return;
+    fg.d3Force("charge")?.strength(-380).distanceMax(420);
+    fg.d3Force("link")?.distance(110);
+    fg.d3VelocityDecay?.(0.35);
+    // Kick the simulation so new forces actually take effect.
+    fg.d3ReheatSimulation?.();
+  }, [data]);
 
   async function selectNode(node: GraphNode) {
     setSelected(node);
@@ -78,6 +95,7 @@ export function GraphCanvas({ data }: Props) {
           </div>
         ) : (
           <ForceGraph2D
+            ref={fgRef}
             graphData={graph}
             width={size.w}
             height={size.h}
@@ -89,7 +107,7 @@ export function GraphCanvas({ data }: Props) {
             onNodeClick={(n: GraphNode) => {
               void selectNode(n);
             }}
-            cooldownTicks={120}
+            cooldownTicks={300}
             nodeCanvasObjectMode={() => "after"}
             nodeCanvasObject={(
               node: GraphNode & { x?: number; y?: number },

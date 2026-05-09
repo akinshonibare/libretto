@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Clock } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth-helpers";
 import { gradeHighlightAction } from "@/app/actions/retention";
 
-type DueRow = {
+type ScheduleRow = {
   highlight_id: string;
   next_due_at: string;
   interval_days: number;
@@ -26,23 +26,50 @@ type DueRow = {
 
 export const dynamic = "force-dynamic";
 
+function formatDueRelative(dateIso: string): string {
+  const now = Date.now();
+  const due = new Date(dateIso).getTime();
+  const diffMs = due - now;
+  const minutes = Math.round(diffMs / 60_000);
+  if (minutes < 60) return `in ${Math.max(1, minutes)} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `in ${hours}h`;
+  const days = Math.round(hours / 24);
+  return `in ${days}d`;
+}
+
 export default async function TodayPage() {
   const { profile } = await requireUser();
   const supabase = await createClient();
 
   const nowIso = new Date().toISOString();
-  const { data } = await supabase
-    .from("resurface_schedule")
-    .select(
-      "highlight_id, next_due_at, interval_days, ease, highlights(id, body, page, review_id, reviews(id, books(title, author)))"
-    )
-    .eq("user_id", profile.id)
-    .lte("next_due_at", nowIso)
-    .order("next_due_at", { ascending: true })
-    .limit(20)
-    .returns<DueRow[]>();
 
-  const due = (data ?? []).filter((r) => r.highlights);
+  // Two queries: what's due now, and what's coming up next.
+  const [{ data: dueRaw }, { data: upcomingRaw }] = await Promise.all([
+    supabase
+      .from("resurface_schedule")
+      .select(
+        "highlight_id, next_due_at, interval_days, ease, highlights(id, body, page, review_id, reviews(id, books(title, author)))"
+      )
+      .eq("user_id", profile.id)
+      .lte("next_due_at", nowIso)
+      .order("next_due_at", { ascending: true })
+      .limit(20)
+      .returns<ScheduleRow[]>(),
+    supabase
+      .from("resurface_schedule")
+      .select(
+        "highlight_id, next_due_at, interval_days, ease, highlights(id, body, page, review_id, reviews(id, books(title, author)))"
+      )
+      .eq("user_id", profile.id)
+      .gt("next_due_at", nowIso)
+      .order("next_due_at", { ascending: true })
+      .limit(5)
+      .returns<ScheduleRow[]>(),
+  ]);
+
+  const due = (dueRaw ?? []).filter((r) => r.highlights);
+  const upcoming = (upcomingRaw ?? []).filter((r) => r.highlights);
 
   return (
     <AppShell handle={profile.handle}>
@@ -52,12 +79,14 @@ export default async function TodayPage() {
           <h1 className="font-heading text-3xl tracking-tight">Today&rsquo;s resurface</h1>
         </div>
         <p className="mt-2 text-[var(--muted-foreground)]">
-          {due.length === 0
-            ? "All caught up. New highlights resurface as you capture them."
-            : `${due.length} ${due.length === 1 ? "highlight" : "highlights"} due — read, decide, move on.`}
+          {due.length > 0
+            ? `${due.length} ${due.length === 1 ? "highlight" : "highlights"} due — read, decide, move on.`
+            : upcoming.length > 0
+              ? "Nothing due yet — here's what's coming up."
+              : "Capture some highlights and they'll resurface here on a spaced-repetition schedule."}
         </p>
 
-        {due.length > 0 ? (
+        {due.length > 0 && (
           <ul className="mt-8 space-y-4">
             {due.map((row) => {
               const h = row.highlights!;
@@ -104,7 +133,41 @@ export default async function TodayPage() {
               );
             })}
           </ul>
-        ) : null}
+        )}
+
+        {upcoming.length > 0 && (
+          <section className="mt-10">
+            <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
+              <Clock className="size-4" />
+              <h2 className="label-eyebrow">Coming up next</h2>
+            </div>
+            <ul className="mt-3 space-y-3">
+              {upcoming.map((row) => {
+                const h = row.highlights!;
+                const review = h.reviews;
+                const book = review?.books;
+                return (
+                  <li key={row.highlight_id}>
+                    <Card>
+                      <CardContent className="space-y-1 p-4">
+                        <p className="prose-quote text-sm leading-snug line-clamp-2">
+                          &ldquo;{h.body}&rdquo;
+                        </p>
+                        <p className="text-xs text-[var(--muted-foreground)]">
+                          {book?.title ?? "Untitled"}
+                          {book?.author ? ` · ${book.author}` : ""}
+                          {h.page != null ? ` · p. ${h.page}` : ""}
+                          <span className="mx-2">·</span>
+                          Resurfaces {formatDueRelative(row.next_due_at)}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
       </div>
     </AppShell>
   );

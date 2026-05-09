@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Users } from "lucide-react";
+import { BookOpen, Users, Search as SearchIcon } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,9 +54,16 @@ export default async function FeedPage() {
   return (
     <AppShell handle={profile.handle}>
       <div className="mx-auto max-w-3xl px-6 py-10">
-        <div className="flex items-center gap-2">
-          <Users className="size-5 text-[var(--accent)]" />
-          <h1 className="font-heading text-4xl tracking-tight">Feed</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Users className="size-5 text-[var(--accent)]" />
+            <h1 className="font-heading text-4xl tracking-tight">Feed</h1>
+          </div>
+          <Link href="/people">
+            <Button variant="outline" size="sm">
+              <SearchIcon className="size-4" /> Find readers
+            </Button>
+          </Link>
         </div>
         <p className="mt-2 text-[var(--muted-foreground)]">
           Public reviews from the readers you follow.
@@ -65,11 +72,11 @@ export default async function FeedPage() {
         {followeeIds.length === 0 ? (
           <EmptyState
             title="You're not following anyone yet"
-            body="Find a reader, hit follow, and their public reviews will surface here."
+            body="Find a reader by handle or name, hit follow, and their public reviews land here."
             cta={
-              <Link href="/clubs">
-                <Button variant="outline" size="sm">
-                  Browse clubs
+              <Link href="/people">
+                <Button size="sm">
+                  <SearchIcon className="size-4" /> Find readers
                 </Button>
               </Link>
             }

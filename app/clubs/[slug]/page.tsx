@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ClubBookPicker } from "@/components/club-book-picker";
+import { ClubInviteLink } from "@/components/club-invite-link";
 import {
   joinClubAction,
   leaveClubAction,
@@ -14,10 +15,11 @@ import {
 } from "@/app/actions/community";
 import { requireUser } from "@/lib/auth-helpers";
 import { createClient } from "@/lib/supabase/server";
+import { getSiteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
-type ClubRow = {
+type ClubInviteRow = {
   id: string;
   slug: string;
   name: string;
@@ -25,69 +27,108 @@ type ClubRow = {
   owner_id: string;
   is_private: boolean;
   current_book_id: string | null;
-  books: { title: string; author: string | null; cover_url: string | null; slug: string } | null;
+  created_at: string;
+  book_title: string | null;
+  book_author: string | null;
+  book_cover_url: string | null;
+  book_slug: string | null;
 };
 
-type MessageRow = {
+type ClubMemberInviteRow = {
+  user_id: string;
+  role: "owner" | "member";
+  handle: string | null;
+  display_name: string | null;
+  joined_at: string;
+};
+
+type ClubMessageInviteRow = {
   id: string;
   body: string;
   created_at: string;
   user_id: string;
-  profiles: { handle: string; display_name: string | null } | null;
+  handle: string | null;
+  display_name: string | null;
 };
 
-export default async function ClubPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function ClubPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ t?: string }>;
+}) {
   const { slug } = await params;
+  const { t: token } = await searchParams;
   const { profile } = await requireUser();
   const supabase = await createClient();
 
-  const { data: club } = await supabase
-    .from("clubs")
-    .select(
-      "id, slug, name, description, owner_id, is_private, current_book_id, books(title, author, cover_url, slug)"
-    )
-    .eq("slug", slug)
-    .returns<ClubRow[]>()
-    .maybeSingle();
-
+  // Resolve the club, honoring an invite token for private clubs.
+  // RPC bypasses base RLS only when the token is valid (or you'd already
+  // have read access via membership/ownership).
+  const { data: clubs } = await supabase
+    .rpc("club_for_invite", { p_slug: slug, p_token: token ?? null })
+    .returns<ClubInviteRow[]>();
+  const club = clubs?.[0];
   if (!club) notFound();
 
-  const [{ data: members }, { data: messages }, { data: ownLibrary }] = await Promise.all([
+  const [
+    { data: members },
+    { data: messages },
+    { data: ownLibraryRows },
+    { data: existingInvite },
+  ] = await Promise.all([
     supabase
-      .from("club_members")
-      .select("user_id, role, profiles!club_members_user_id_fkey(handle, display_name)")
-      .eq("club_id", club.id)
-      .order("joined_at", { ascending: true })
-      .returns<
-        Array<{
-          user_id: string;
-          role: "owner" | "member";
-          profiles: { handle: string; display_name: string | null } | null;
-        }>
-      >(),
+      .rpc("club_members_for_invite", { p_club_id: club.id, p_token: token ?? null })
+      .returns<ClubMemberInviteRow[]>(),
     supabase
-      .from("club_messages")
-      .select("id, body, created_at, user_id, profiles!club_messages_user_id_fkey(handle, display_name)")
-      .eq("club_id", club.id)
-      .order("created_at", { ascending: true })
-      .limit(200)
-      .returns<MessageRow[]>(),
+      .rpc("club_messages_for_invite", { p_club_id: club.id, p_token: token ?? null })
+      .returns<ClubMessageInviteRow[]>(),
+    // Owner-only book picker — non-owners don't need this.
     supabase
-      .from("books")
-      .select("id, title, author")
-      .in(
-        "id",
-        (
-          await supabase.from("reviews").select("book_id").eq("user_id", profile.id)
-        ).data?.map((r) => r.book_id) ?? ["00000000-0000-0000-0000-000000000000"]
-      )
-      .order("title")
-      .returns<Array<{ id: string; title: string; author: string | null }>>(),
+      .from("reviews")
+      .select("book_id")
+      .eq("user_id", profile.id),
+    // Try to read an existing invite token (owner-only via RLS; returns null otherwise).
+    club.is_private
+      ? supabase
+          .from("club_invite_tokens")
+          .select("token")
+          .eq("club_id", club.id)
+          .is("revoked_at", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : { data: null as { token: string } | null },
   ]);
+
+  const ownLibrary = ownLibraryRows
+    ? (
+        await supabase
+          .from("books")
+          .select("id, title, author")
+          .in(
+            "id",
+            ownLibraryRows.length
+              ? ownLibraryRows.map((r) => r.book_id)
+              : ["00000000-0000-0000-0000-000000000000"]
+          )
+          .order("title")
+      ).data ?? []
+    : [];
 
   const isMember = (members ?? []).some((m) => m.user_id === profile.id);
   const isOwner = club.owner_id === profile.id;
-  const book = club.books;
+  const hasInviteAccess = !!token && club.is_private && !isMember && !isOwner;
+
+  const book = club.book_title
+    ? {
+        title: club.book_title,
+        author: club.book_author,
+        cover_url: club.book_cover_url,
+        slug: club.book_slug,
+      }
+    : null;
 
   return (
     <AppShell handle={profile.handle}>
@@ -131,6 +172,7 @@ export default async function ClubPage({ params }: { params: Promise<{ slug: str
               <form action={joinClubAction}>
                 <input type="hidden" name="clubId" value={club.id} />
                 <input type="hidden" name="slug" value={club.slug} />
+                {token && <input type="hidden" name="token" value={token} />}
                 <Button type="submit" size="sm">
                   Join
                 </Button>
@@ -138,6 +180,24 @@ export default async function ClubPage({ params }: { params: Promise<{ slug: str
             )}
           </div>
         </header>
+
+        {hasInviteAccess && (
+          <p className="mt-4 rounded-md border border-[var(--border)] bg-[var(--card)] p-3 text-xs text-[var(--muted-foreground)]">
+            You&rsquo;re viewing this private club via an invite link. Hit Join to participate, or
+            just read along.
+          </p>
+        )}
+
+        {isOwner && club.is_private && (
+          <div className="mt-4">
+            <ClubInviteLink
+              clubId={club.id}
+              clubSlug={club.slug}
+              siteUrl={getSiteUrl()}
+              initialToken={existingInvite?.token ?? null}
+            />
+          </div>
+        )}
 
         <Section title="Currently reading">
           {book ? (
@@ -156,9 +216,13 @@ export default async function ClubPage({ params }: { params: Promise<{ slug: str
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <Link href={`/b/${book.slug}`}>
+                  {book.slug ? (
+                    <Link href={`/b/${book.slug}`}>
+                      <p className="font-heading text-xl">{book.title}</p>
+                    </Link>
+                  ) : (
                     <p className="font-heading text-xl">{book.title}</p>
-                  </Link>
+                  )}
                   {book.author && (
                     <p className="text-sm text-[var(--muted-foreground)]">{book.author}</p>
                   )}
@@ -175,7 +239,7 @@ export default async function ClubPage({ params }: { params: Promise<{ slug: str
               clubId={club.id}
               slug={club.slug}
               currentBookId={club.current_book_id}
-              books={ownLibrary ?? []}
+              books={ownLibrary}
             />
           )}
         </Section>
@@ -185,7 +249,7 @@ export default async function ClubPage({ params }: { params: Promise<{ slug: str
             <ul className="max-h-[480px] space-y-3 overflow-y-auto rounded-md border border-[var(--border)] bg-[var(--card)] p-4">
               {messages.map((m) => (
                 <li key={m.id} className="text-sm">
-                  <span className="font-medium">@{m.profiles?.handle}</span>
+                  <span className="font-medium">@{m.handle}</span>
                   <span className="ml-2 text-xs text-[var(--muted-foreground)]">
                     {new Date(m.created_at).toLocaleString()}
                   </span>
@@ -216,10 +280,10 @@ export default async function ClubPage({ params }: { params: Promise<{ slug: str
             {(members ?? []).map((m) => (
               <li key={m.user_id}>
                 <Link
-                  href={`/u/${m.profiles?.handle ?? ""}`}
+                  href={`/u/${m.handle ?? ""}`}
                   className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] px-3 py-1 text-sm hover:border-[var(--ring)]"
                 >
-                  @{m.profiles?.handle}
+                  @{m.handle}
                   {m.role === "owner" && <Badge variant="accent">Owner</Badge>}
                 </Link>
               </li>

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Send, Sparkles, Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
@@ -148,7 +150,19 @@ export function SocraticChat({
                     : "mr-8 bg-[var(--card)] border border-[var(--border)]"
                 )}
               >
-                {m.content || (streaming && i === messages.length - 1 ? "…" : "")}
+                {m.role === "assistant" ? (
+                  m.content ? (
+                    <div className="chat-prose">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                    </div>
+                  ) : streaming && i === messages.length - 1 ? (
+                    "…"
+                  ) : (
+                    ""
+                  )
+                ) : (
+                  <span className="whitespace-pre-wrap">{m.content}</span>
+                )}
               </div>
             ))
           )}
