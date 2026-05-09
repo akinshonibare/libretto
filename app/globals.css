@@ -383,6 +383,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Belt-and-suspenders against horizontal scroll on phones. Long URLs in copy
+ * (review pages, share strings) and long unbroken handles can otherwise push
+ * the viewport wider than the screen. */
+html, body {
+  overflow-x: hidden;
+}
+
 /* Tailwind v4 dropped `cursor: pointer` from preflight (matching the CSS spec
  * default, which is `default`). Restore the expected affordance for clickable
  * elements site-wide. Disabled buttons keep the default cursor. */
