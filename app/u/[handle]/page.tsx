@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { SiteHeader } from "@/components/site-header";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 import type { PublicProfileReviewRow } from "@/lib/queries";
@@ -50,18 +51,16 @@ export default async function PublicProfilePage({
     .returns<PublicProfileReviewRow[]>();
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-10">
-      <Link href="/" className="font-heading text-2xl tracking-tight">
-        Libretto
-      </Link>
-
-      <header className="mt-10">
-        <p className="text-sm text-[var(--muted-foreground)]">@{profile.handle}</p>
-        <h1 className="mt-1 font-heading text-4xl tracking-tight">
-          {profile.display_name ?? profile.handle}
-        </h1>
-        {profile.bio && <p className="mt-2 text-[var(--muted-foreground)]">{profile.bio}</p>}
-      </header>
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+      <main className="mx-auto w-full max-w-4xl px-6 py-10">
+        <header>
+          <p className="text-sm text-[var(--muted-foreground)]">@{profile.handle}</p>
+          <h1 className="mt-1 font-heading text-4xl tracking-tight">
+            {profile.display_name ?? profile.handle}
+          </h1>
+          {profile.bio && <p className="mt-2 text-[var(--muted-foreground)]">{profile.bio}</p>}
+        </header>
 
       <h2 className="mt-10 font-heading text-xl">Public reading</h2>
       {!reviews || reviews.length === 0 ? (
@@ -106,7 +105,8 @@ export default async function PublicProfilePage({
             );
           })}
         </ul>
-      )}
+        )}
+      </main>
     </div>
   );
 }

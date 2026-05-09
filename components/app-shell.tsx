@@ -1,60 +1,17 @@
-import Link from "next/link";
-import { signOutAction } from "@/app/actions/auth";
-import { Button } from "@/components/ui/button";
+import { SiteHeader } from "@/components/site-header";
 
-export function AppShell({
-  handle,
-  children,
-}: {
-  handle: string;
-  children: React.ReactNode;
-}) {
+/**
+ * Authed-route wrapper. Identical to the public layout — both share the same
+ * SiteHeader; the header itself adapts to auth state (so an authed user lands
+ * on /u/[handle] and still sees their nav).
+ *
+ * Kept as a thin wrapper so existing call sites (`<AppShell handle={…}>`) don't
+ * need to change. The `handle` prop is now optional and unused.
+ */
+export function AppShell({ children }: { handle?: string; children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-1 flex-col">
-      <header className="border-b border-[var(--border)]">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link href="/library" className="font-heading text-2xl tracking-tight">
-            Libretto
-          </Link>
-          <nav className="flex items-center gap-1 text-sm">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm">
-                Home
-              </Button>
-            </Link>
-            <Link href="/library">
-              <Button variant="ghost" size="sm">
-                Library
-              </Button>
-            </Link>
-            <Link href="/today">
-              <Button variant="ghost" size="sm">
-                Today
-              </Button>
-            </Link>
-            <Link href="/discover">
-              <Button variant="ghost" size="sm">
-                Discover
-              </Button>
-            </Link>
-            <Link href={`/u/${handle}`}>
-              <Button variant="ghost" size="sm">
-                @{handle}
-              </Button>
-            </Link>
-            <Link href="/settings">
-              <Button variant="ghost" size="sm">
-                Theme
-              </Button>
-            </Link>
-            <form action={signOutAction}>
-              <Button variant="outline" size="sm" type="submit">
-                Sign out
-              </Button>
-            </form>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
       <main className="flex-1">{children}</main>
     </div>
   );

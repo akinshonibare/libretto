@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { BookOpen, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { SiteHeader } from "@/components/site-header";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site";
 import type { HighlightRow, PublicReviewRow } from "@/lib/queries";
@@ -115,12 +116,10 @@ export default async function PublicReviewPage({
   const author = review.profiles;
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10">
-      <Link href="/" className="font-heading text-2xl tracking-tight">
-        Libretto
-      </Link>
-
-      <header className="mt-10 flex gap-6">
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+      <main className="mx-auto w-full max-w-3xl px-6 py-10">
+        <header className="flex gap-6">
         {book?.cover_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -173,25 +172,26 @@ export default async function PublicReviewPage({
         </section>
       )}
 
-      {highlights.length > 0 && (
-        <section className="mt-8">
-          <h2 className="font-heading text-xl mb-3">Highlights</h2>
-          <ul className="space-y-3">
-            {highlights.map((h) => (
-              <li key={h.id}>
-                <Card>
-                  <CardContent className="p-4">
-                    <p className="prose-quote text-base">&ldquo;{h.body}&rdquo;</p>
-                    {h.page != null && (
-                      <p className="mt-2 text-xs text-[var(--muted-foreground)]">p. {h.page}</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+        {highlights.length > 0 && (
+          <section className="mt-8">
+            <h2 className="font-heading text-xl mb-3">Highlights</h2>
+            <ul className="space-y-3">
+              {highlights.map((h) => (
+                <li key={h.id}>
+                  <Card>
+                    <CardContent className="p-4">
+                      <p className="prose-quote text-base">&ldquo;{h.body}&rdquo;</p>
+                      {h.page != null && (
+                        <p className="mt-2 text-xs text-[var(--muted-foreground)]">p. {h.page}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </main>
     </div>
   );
 }

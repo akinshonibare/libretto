@@ -3,40 +3,19 @@ import { redirect } from "next/navigation";
 import { BookOpen, Sparkles, Network, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { SiteHeader } from "@/components/site-header";
+import { getSessionContext } from "@/lib/auth-helpers";
 
 export default async function Home() {
-  if (isSupabaseConfigured()) {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) redirect("/dashboard");
-  }
+  const { user } = await getSessionContext();
+  if (user) redirect("/dashboard");
   return <Landing />;
 }
 
 function Landing() {
   return (
     <div className="flex flex-col flex-1">
-      <header className="border-b border-[var(--border)]">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link href="/" className="font-heading text-2xl tracking-tight">
-            Libretto
-          </Link>
-          <nav className="flex items-center gap-2">
-            <Link href="/settings">
-              <Button variant="ghost" size="sm">
-                Theme
-              </Button>
-            </Link>
-            <Link href="/auth/sign-in">
-              <Button size="sm">Sign in</Button>
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="flex-1">
         <section className="mx-auto max-w-5xl px-6 py-24">
