@@ -28,39 +28,78 @@ const MODE_LABEL: Record<string, string> = {
   enjoy: "Enjoy",
 };
 
+type ReviewForShareRow = {
+  id: string;
+  user_id: string;
+  status: PublicReviewRow["status"];
+  rating: number | null;
+  liked: boolean | null;
+  why: string | null;
+  synopsis: string | null;
+  reading_mode: PublicReviewRow["reading_mode"];
+  is_public: boolean;
+  updated_at: string;
+  book_title: string | null;
+  book_author: string | null;
+  book_cover_url: string | null;
+  book_year: number | null;
+  book_slug: string | null;
+  author_handle: string | null;
+  author_display_name: string | null;
+};
+
 async function loadReview(reviewId: string, token?: string) {
   const supabase = await createClient();
-  const { data: review } = await supabase
-    .from("reviews")
-    .select(
-      "id, user_id, status, rating, liked, why, synopsis, reading_mode, is_public, updated_at, books(title, author, cover_url, year, slug), profiles!reviews_user_id_fkey(handle, display_name)"
-    )
-    .eq("id", reviewId)
-    .returns<PublicReviewRow[]>()
-    .maybeSingle();
 
+  // SECURITY DEFINER RPC: returns the review only if it's public, the caller is
+  // the owner, or the supplied token matches a share-token row. This is what
+  // makes share-token links work for *private* reviews — the regular SELECT
+  // policy on `reviews` would otherwise block them.
+  const { data: rows } = await supabase.rpc("review_for_share", {
+    p_review_id: reviewId,
+    p_token: token ?? null,
+  });
+  const review = (rows as ReviewForShareRow[] | null)?.[0];
   if (!review) return null;
 
-  // If public, allow. If private, allow only when a valid share token is provided.
-  if (!review.is_public) {
-    if (!token) return null;
-    const { data: t } = await supabase
-      .from("review_share_tokens")
-      .select("token")
-      .eq("token", token)
-      .eq("review_id", reviewId)
-      .maybeSingle();
-    if (!t) return null;
-  }
+  const { data: highlights } = await supabase.rpc("highlights_for_share", {
+    p_review_id: reviewId,
+    p_token: token ?? null,
+  });
 
-  const { data: highlights } = await supabase
-    .from("highlights")
-    .select("id, body, page, source, created_at")
-    .eq("review_id", reviewId)
-    .order("created_at", { ascending: true })
-    .returns<HighlightRow[]>();
+  // Re-shape into the existing PublicReviewRow / HighlightRow contracts.
+  const reshapedReview: PublicReviewRow = {
+    id: review.id,
+    user_id: review.user_id,
+    status: review.status,
+    rating: review.rating,
+    liked: review.liked,
+    why: review.why,
+    synopsis: review.synopsis,
+    reading_mode: review.reading_mode,
+    is_public: review.is_public,
+    updated_at: review.updated_at,
+    books: review.book_title
+      ? {
+          title: review.book_title,
+          author: review.book_author,
+          cover_url: review.book_cover_url,
+          year: review.book_year,
+          slug: review.book_slug ?? "",
+        }
+      : null,
+    profiles: review.author_handle
+      ? {
+          handle: review.author_handle,
+          display_name: review.author_display_name,
+        }
+      : null,
+  };
 
-  return { review, highlights: highlights ?? [] };
+  return {
+    review: reshapedReview,
+    highlights: ((highlights as HighlightRow[] | null) ?? []) as HighlightRow[],
+  };
 }
 
 export async function generateMetadata({

@@ -382,6 +382,17 @@ body {
   font-feature-settings: "ss01", "kern";
   -webkit-font-smoothing: antialiased;
 }
+
+/* Tailwind v4 dropped `cursor: pointer` from preflight (matching the CSS spec
+ * default, which is `default`). Restore the expected affordance for clickable
+ * elements site-wide. Disabled buttons keep the default cursor. */
+button:not(:disabled),
+[role="button"]:not(:disabled),
+summary,
+label[for],
+select:not(:disabled) {
+  cursor: pointer;
+}
 h1, h2, h3, h4, h5, h6, .font-heading {
   font-family: var(--font-heading);
   letter-spacing: -0.01em;

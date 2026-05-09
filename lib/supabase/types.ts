@@ -441,7 +441,54 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      review_for_share: {
+        Args: { p_review_id: string; p_token?: string | null };
+        Returns: Array<{
+          id: string;
+          user_id: string;
+          status: ReadingStatus;
+          rating: number | null;
+          liked: boolean | null;
+          why: string | null;
+          synopsis: string | null;
+          reading_mode: ReadingMode;
+          is_public: boolean;
+          updated_at: string;
+          book_title: string | null;
+          book_author: string | null;
+          book_cover_url: string | null;
+          book_year: number | null;
+          book_slug: string | null;
+          author_handle: string | null;
+          author_display_name: string | null;
+        }>;
+      };
+      highlights_for_share: {
+        Args: { p_review_id: string; p_token?: string | null };
+        Returns: Array<{
+          id: string;
+          review_id: string;
+          body: string;
+          page: number | null;
+          source: string;
+          created_at: string;
+        }>;
+      };
+      highlight_for_share: {
+        Args: { p_highlight_id: string; p_token?: string | null };
+        Returns: Array<{
+          id: string;
+          body: string;
+          page: number | null;
+          review_id: string;
+          is_public: boolean;
+          book_title: string | null;
+          book_author: string | null;
+          author_handle: string | null;
+        }>;
+      };
+    };
     Enums: { reading_status: ReadingStatus; reading_mode: ReadingMode };
   };
 };

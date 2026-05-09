@@ -1,8 +1,18 @@
 import { ImageResponse } from "next/og";
 import { createClient } from "@/lib/supabase/server";
-import type { PublicReviewRow } from "@/lib/queries";
 
 export const runtime = "nodejs";
+
+type ReviewForShareRow = {
+  id: string;
+  rating: number | null;
+  why: string | null;
+  is_public: boolean;
+  book_title: string | null;
+  book_author: string | null;
+  book_cover_url: string | null;
+  author_handle: string | null;
+};
 
 export async function GET(
   request: Request,
@@ -13,30 +23,20 @@ export async function GET(
   const token = url.searchParams.get("t") ?? undefined;
 
   const supabase = await createClient();
-  const { data: review } = await supabase
-    .from("reviews")
-    .select(
-      "id, user_id, status, rating, liked, why, synopsis, reading_mode, is_public, updated_at, books(title, author, cover_url, year, slug), profiles!reviews_user_id_fkey(handle, display_name)"
-    )
-    .eq("id", id)
-    .returns<PublicReviewRow[]>()
-    .maybeSingle();
-
+  // Goes through the SECURITY DEFINER fn — public, owner, or matching token only.
+  const { data: rows } = await supabase.rpc("review_for_share", {
+    p_review_id: id,
+    p_token: token ?? null,
+  });
+  const review = (rows as ReviewForShareRow[] | null)?.[0];
   if (!review) return new Response("Not found", { status: 404 });
 
-  if (!review.is_public) {
-    if (!token) return new Response("Forbidden", { status: 403 });
-    const { data: t } = await supabase
-      .from("review_share_tokens")
-      .select("token")
-      .eq("token", token)
-      .eq("review_id", id)
-      .maybeSingle();
-    if (!t) return new Response("Forbidden", { status: 403 });
-  }
-
-  const book = review.books;
-  const author = review.profiles;
+  const book = {
+    title: review.book_title,
+    author: review.book_author,
+    cover_url: review.book_cover_url,
+  };
+  const author = { handle: review.author_handle };
 
   return new ImageResponse(
     (

@@ -3,16 +3,15 @@ import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
-type HighlightOg = {
+type HighlightForShareRow = {
   id: string;
   body: string;
   page: number | null;
-  reviews: {
-    id: string;
-    is_public: boolean;
-    books: { title: string; author: string | null } | null;
-    profiles: { handle: string } | null;
-  } | null;
+  review_id: string;
+  is_public: boolean;
+  book_title: string | null;
+  book_author: string | null;
+  author_handle: string | null;
 };
 
 export async function GET(
@@ -24,30 +23,15 @@ export async function GET(
   const token = url.searchParams.get("t") ?? undefined;
 
   const supabase = await createClient();
-  const { data: h } = await supabase
-    .from("highlights")
-    .select(
-      "id, body, page, reviews(id, is_public, books(title, author), profiles!reviews_user_id_fkey(handle))"
-    )
-    .eq("id", id)
-    .returns<HighlightOg[]>()
-    .maybeSingle();
+  const { data: rows } = await supabase.rpc("highlight_for_share", {
+    p_highlight_id: id,
+    p_token: token ?? null,
+  });
+  const h = (rows as HighlightForShareRow[] | null)?.[0];
+  if (!h) return new Response("Not found", { status: 404 });
 
-  if (!h || !h.reviews) return new Response("Not found", { status: 404 });
-
-  if (!h.reviews.is_public) {
-    if (!token) return new Response("Forbidden", { status: 403 });
-    const { data: t } = await supabase
-      .from("review_share_tokens")
-      .select("token")
-      .eq("token", token)
-      .eq("review_id", h.reviews.id)
-      .maybeSingle();
-    if (!t) return new Response("Forbidden", { status: 403 });
-  }
-
-  const book = h.reviews.books;
-  const handle = h.reviews.profiles?.handle ?? "";
+  const book = { title: h.book_title, author: h.book_author };
+  const handle = h.author_handle ?? "";
   const quote = h.body.length > 280 ? h.body.slice(0, 277) + "…" : h.body;
 
   return new ImageResponse(
