@@ -2,9 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { checkAndAwardBadges, touchStreak } from "@/lib/retention";
+import { processHighlightConcepts } from "@/lib/ai/concepts";
+import { isAnthropicConfigured } from "@/lib/ai/anthropic";
 
 const HighlightInput = z.object({
   reviewId: z.string().uuid(),
@@ -28,13 +31,17 @@ export async function addHighlightAction(formData: FormData) {
   });
   if (!parsed.success) return;
 
-  const { error } = await supabase.from("highlights").insert({
-    review_id: parsed.data.reviewId,
-    body: parsed.data.body,
-    page: parsed.data.page ?? null,
-    session_id: parsed.data.sessionId ?? null,
-    source: parsed.data.sessionId ? "session" : "manual",
-  });
+  const { data: inserted, error } = await supabase
+    .from("highlights")
+    .insert({
+      review_id: parsed.data.reviewId,
+      body: parsed.data.body,
+      page: parsed.data.page ?? null,
+      session_id: parsed.data.sessionId ?? null,
+      source: parsed.data.sessionId ? "session" : "manual",
+    })
+    .select("id")
+    .single();
   if (error) console.error("[addHighlight]", error);
 
   await touchStreak(supabase, user.id);
@@ -44,6 +51,23 @@ export async function addHighlightAction(formData: FormData) {
   revalidatePath("/dashboard");
   if (parsed.data.sessionId) {
     revalidatePath(`/library/${parsed.data.reviewId}/session/${parsed.data.sessionId}`);
+  }
+
+  // Fire-and-forget: extract concepts after the response so the user isn't
+  // blocked on a Claude round-trip just to save a highlight.
+  if (inserted && isAnthropicConfigured()) {
+    const highlightId = inserted.id;
+    const reviewId = parsed.data.reviewId;
+    const userId = user.id;
+    after(async () => {
+      try {
+        const sb = await createClient();
+        await processHighlightConcepts(sb, { userId, highlightId, reviewId });
+        revalidatePath("/graph");
+      } catch (err) {
+        console.error("[concepts/after]", err);
+      }
+    });
   }
 }
 

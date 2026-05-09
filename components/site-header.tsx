@@ -28,6 +28,7 @@ export async function SiteHeader() {
               <NavLink href="/library">Library</NavLink>
               <NavLink href="/today">Today</NavLink>
               <NavLink href="/discover">Discover</NavLink>
+              <NavLink href="/graph">Graph</NavLink>
               <NavLink href={`/u/${profile.handle}`}>@{profile.handle}</NavLink>
               <NavLink href="/settings">Theme</NavLink>
               <form action={signOutAction}>

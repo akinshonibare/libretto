@@ -267,6 +267,32 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["library_heart"]["Insert"]>;
         Relationships: [];
       };
+      concepts: {
+        Row: {
+          id: string;
+          user_id: string;
+          slug: string;
+          label: string;
+          highlight_count: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          slug: string;
+          label: string;
+          highlight_count?: number;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["concepts"]["Insert"]>;
+        Relationships: [];
+      };
+      highlight_concepts: {
+        Row: { highlight_id: string; concept_id: string };
+        Insert: { highlight_id: string; concept_id: string };
+        Update: Partial<Database["public"]["Tables"]["highlight_concepts"]["Insert"]>;
+        Relationships: [];
+      };
       recommendations_cache: {
         Row: {
           user_id: string;
