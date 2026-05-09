@@ -21,7 +21,7 @@ export async function SiteHeader() {
   const { profile } = await getSessionContext();
 
   return (
-    <header className="border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-sm">
+    <header className="relative z-40 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-sm">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
         <Link
           href={profile ? "/dashboard" : "/"}

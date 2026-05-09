@@ -69,7 +69,7 @@ export function UserMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--popover)] text-[var(--popover-foreground)] shadow-lg"
+          className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--popover)] text-[var(--popover-foreground)] shadow-lg"
         >
           <div className="border-b border-[var(--border)] px-3 py-2.5">
             <p className="font-medium leading-tight">{displayName ?? handle}</p>
