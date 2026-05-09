@@ -220,6 +220,8 @@ const MessageInput = z.object({
   body: z.string().min(1).max(2000),
 });
 
+const ENABLE_CLUB_MESSAGE_SPAM_HEURISTICS = false;
+
 /**
  * Spam heuristics for club messages. We do NOT word-filter for slurs —
  * maintaining a curated list at the application layer creates more harm than
@@ -270,7 +272,7 @@ export async function postClubMessageAction(formData: FormData): Promise<void> {
 
   // Spam filter intentionally inactive — rate limit + RLS-gated membership +
   // reports are enough for v1. Helper kept; re-enable here if abuse picks up.
-  // if (looksLikeSpam(parsed.data.body)) return;
+  if (ENABLE_CLUB_MESSAGE_SPAM_HEURISTICS && looksLikeSpam(parsed.data.body)) return;
 
   // Rate limit: 1 message per 2 seconds per user.
   const twoSecondsAgo = new Date(Date.now() - 2000).toISOString();

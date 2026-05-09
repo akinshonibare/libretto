@@ -6,6 +6,7 @@ import { ServiceWorkerRegister } from "@/components/sw-register";
 import { PageDecor } from "@/components/page-decor";
 import { readThemeCookie } from "@/lib/theme-cookie";
 import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 const sans = Inter({
   variable: "--font-sans",
@@ -40,7 +41,7 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: Readonly<{ children: ReactNode }>) {
   const theme = await readThemeCookie();
   const isDark = theme.mode === "dark";
 

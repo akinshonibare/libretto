@@ -1,12 +1,26 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { BookOpen, Sparkles, Network, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SiteHeader } from "@/components/site-header";
+import { PaolaWelcome } from "@/components/paola-welcome";
+import { PAOLA_WELCOMED_COOKIE } from "@/lib/paola-welcome";
 import { getSessionContext } from "@/lib/auth-helpers";
+import type { ReactNode } from "react";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: Promise<{ for_paola?: string }>;
+}) {
+  const store = await cookies();
+  const welcomed = store.get(PAOLA_WELCOMED_COOKIE)?.value === "1";
+  const forPaola = (await searchParams)?.for_paola === "true";
+
+  if (forPaola && !welcomed) return <PaolaWelcome />;
+
   const { user } = await getSessionContext();
   if (user) redirect("/dashboard");
   return <Landing />;
@@ -85,7 +99,7 @@ function Feature({
   title,
   body,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   body: string;
 }) {
