@@ -267,6 +267,22 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["library_heart"]["Insert"]>;
         Relationships: [];
       };
+      recommendations_cache: {
+        Row: {
+          user_id: string;
+          payload: unknown;
+          generated_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          user_id: string;
+          payload: unknown;
+          generated_at?: string;
+          expires_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["recommendations_cache"]["Insert"]>;
+        Relationships: [];
+      };
       ai_usage: {
         Row: {
           user_id: string;

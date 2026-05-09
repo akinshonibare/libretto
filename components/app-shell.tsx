@@ -32,6 +32,11 @@ export function AppShell({
                 Today
               </Button>
             </Link>
+            <Link href="/discover">
+              <Button variant="ghost" size="sm">
+                Discover
+              </Button>
+            </Link>
             <Link href={`/u/${handle}`}>
               <Button variant="ghost" size="sm">
                 @{handle}
