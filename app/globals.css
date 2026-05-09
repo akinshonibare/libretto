@@ -390,6 +390,16 @@ html, body {
   overflow-x: hidden;
 }
 
+/* iOS Safari auto-zooms into any focused field whose font-size is < 16px,
+ * which then pushes the layout wider than the viewport and leaves the page
+ * scrollable on both axes after blur. Force 16px on touch-sized screens
+ * while keeping the smaller text-sm look on desktop. */
+@media (max-width: 767px) {
+  input, textarea, select {
+    font-size: 16px;
+  }
+}
+
 /* Tailwind v4 dropped `cursor: pointer` from preflight (matching the CSS spec
  * default, which is `default`). Restore the expected affordance for clickable
  * elements site-wide. Disabled buttons keep the default cursor. */

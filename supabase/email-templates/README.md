@@ -77,8 +77,7 @@ Project: `libretto` (`agmkjyxujmcpskijoitm`).
     - Password: the Resend API key from step 1.5
     - Min interval per user: `60` (seconds)
 2.  **Authentication → URL Configuration**
-    - Site URL: `https://libretto-ivory.vercel.app` (or custom domain
-      once it's live)
+    - Site URL: `https://libretto.akinshonibare.com`
     - Redirect URL allowlist must include `…/auth/callback` for every
       origin you sign in from (prod, preview wildcard, localhost).
 3.  **Authentication → Emails → Templates → Magic link**

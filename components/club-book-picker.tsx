@@ -45,7 +45,7 @@ export function ClubBookPicker({
       <select
         value={bookId}
         onChange={(e) => setBookId(e.target.value)}
-        className="rounded-md border border-[var(--input)] bg-[var(--card)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2 focus:ring-offset-[var(--background)]"
+        className="w-full min-w-0 max-w-full rounded-md border border-[var(--input)] bg-[var(--card)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2 focus:ring-offset-[var(--background)] sm:w-auto sm:flex-1"
       >
         <option value="">— Pick a book —</option>
         {books.map((b) => (
