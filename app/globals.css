@@ -447,3 +447,42 @@ mark, .highlight {
   height: 1px;
   background: var(--border);
 }
+
+/* Chat prose — minimal, type-aware markdown rendering for Socratic chat replies. */
+.chat-prose > * + * { margin-top: 0.6rem; }
+.chat-prose p { line-height: 1.55; }
+.chat-prose strong { font-weight: 600; }
+.chat-prose em { font-style: italic; }
+.chat-prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  background: var(--muted);
+  padding: 0.05em 0.3em;
+  border-radius: 3px;
+}
+.chat-prose pre {
+  background: var(--muted);
+  padding: 0.65rem 0.85rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.85em;
+}
+.chat-prose pre code { background: transparent; padding: 0; }
+.chat-prose ul, .chat-prose ol { padding-left: 1.25rem; }
+.chat-prose ul { list-style: disc; }
+.chat-prose ol { list-style: decimal; }
+.chat-prose li + li { margin-top: 0.25rem; }
+.chat-prose blockquote {
+  border-left: 2px solid var(--accent);
+  padding-left: 0.75rem;
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+.chat-prose h1, .chat-prose h2, .chat-prose h3, .chat-prose h4 {
+  font-weight: 600;
+  margin-top: 0.4rem;
+}
+.chat-prose h1 { font-size: 1.05em; }
+.chat-prose h2 { font-size: 1em; }
+.chat-prose h3, .chat-prose h4 { font-size: 0.95em; }
+.chat-prose a { text-decoration: underline; text-underline-offset: 2px; }
