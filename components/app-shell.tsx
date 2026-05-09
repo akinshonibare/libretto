@@ -16,10 +16,20 @@ export function AppShell({
           <Link href="/library" className="font-heading text-2xl tracking-tight">
             Libretto
           </Link>
-          <nav className="flex items-center gap-2 text-sm">
+          <nav className="flex items-center gap-1 text-sm">
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm">
+                Home
+              </Button>
+            </Link>
             <Link href="/library">
               <Button variant="ghost" size="sm">
                 Library
+              </Button>
+            </Link>
+            <Link href="/today">
+              <Button variant="ghost" size="sm">
+                Today
               </Button>
             </Link>
             <Link href={`/u/${handle}`}>

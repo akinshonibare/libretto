@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/utils";
+import { checkAndAwardBadges, touchStreak } from "@/lib/retention";
 import type { ReadingMode, ReadingStatus } from "@/lib/supabase/types";
 
 const READING_MODES = ["absorb", "study", "challenge", "apply", "enjoy"] as const;
@@ -118,8 +119,12 @@ export async function createReviewAction(formData: FormData): Promise<CreateRevi
     return { ok: false, error: error?.message ?? "Could not save review." };
   }
 
+  await touchStreak(supabase, user.id);
+  await checkAndAwardBadges(supabase, user.id);
+
   revalidatePath("/library");
   revalidatePath(`/library/${review.id}`);
+  revalidatePath("/dashboard");
   return { ok: true, reviewId: review.id };
 }
 
@@ -159,5 +164,6 @@ export async function addChapterNoteAction(formData: FormData) {
     page: parsed.data.page ?? null,
   });
   if (error) console.error("[chapter_notes]", error);
+  await touchStreak(supabase, user.id);
   revalidatePath(`/library/${parsed.data.reviewId}`);
 }

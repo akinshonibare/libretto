@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { checkAndAwardBadges, touchStreak } from "@/lib/retention";
 import type { ReadingMode } from "@/lib/supabase/types";
 
 const VALID_MODES: ReadingMode[] = ["absorb", "study", "challenge", "apply", "enjoy"];
@@ -52,6 +53,10 @@ export async function endSessionAction(formData: FormData): Promise<void> {
     .eq("id", sessionId)
     .eq("user_id", user.id);
 
+  await touchStreak(supabase, user.id);
+  await checkAndAwardBadges(supabase, user.id);
+
   revalidatePath(`/library/${reviewId}`);
+  revalidatePath("/dashboard");
   redirect(`/library/${reviewId}`);
 }

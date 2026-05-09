@@ -197,6 +197,100 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["review_share_tokens"]["Insert"]>;
         Relationships: [];
       };
+      streaks: {
+        Row: {
+          user_id: string;
+          current: number;
+          longest: number;
+          last_logged_date: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          current?: number;
+          longest?: number;
+          last_logged_date?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["streaks"]["Insert"]>;
+        Relationships: [];
+      };
+      badges: {
+        Row: {
+          id: string;
+          name: string;
+          description: string;
+          icon: string;
+          threshold: number | null;
+          metric: string;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          name: string;
+          description: string;
+          icon?: string;
+          threshold?: number | null;
+          metric: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["badges"]["Insert"]>;
+        Relationships: [];
+      };
+      user_badges: {
+        Row: {
+          user_id: string;
+          badge_id: string;
+          awarded_at: string;
+        };
+        Insert: {
+          user_id: string;
+          badge_id: string;
+          awarded_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["user_badges"]["Insert"]>;
+        Relationships: [];
+      };
+      library_heart: {
+        Row: {
+          user_id: string;
+          score: number;
+          components: Record<string, number> | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          score?: number;
+          components?: Record<string, number> | null;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["library_heart"]["Insert"]>;
+        Relationships: [];
+      };
+      resurface_schedule: {
+        Row: {
+          highlight_id: string;
+          user_id: string;
+          ease: number;
+          interval_days: number;
+          lapses: number;
+          reviews_count: number;
+          last_reviewed_at: string | null;
+          next_due_at: string;
+        };
+        Insert: {
+          highlight_id: string;
+          user_id: string;
+          ease?: number;
+          interval_days?: number;
+          lapses?: number;
+          reviews_count?: number;
+          last_reviewed_at?: string | null;
+          next_due_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["resurface_schedule"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

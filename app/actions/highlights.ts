@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { checkAndAwardBadges, touchStreak } from "@/lib/retention";
 
 const HighlightInput = z.object({
   reviewId: z.string().uuid(),
@@ -36,7 +37,11 @@ export async function addHighlightAction(formData: FormData) {
   });
   if (error) console.error("[addHighlight]", error);
 
+  await touchStreak(supabase, user.id);
+  await checkAndAwardBadges(supabase, user.id);
+
   revalidatePath(`/library/${parsed.data.reviewId}`);
+  revalidatePath("/dashboard");
   if (parsed.data.sessionId) {
     revalidatePath(`/library/${parsed.data.reviewId}/session/${parsed.data.sessionId}`);
   }
