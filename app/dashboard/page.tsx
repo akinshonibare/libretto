@@ -154,12 +154,14 @@ export default async function DashboardPage() {
                 if (!meta) return null;
                 const icon = BADGE_ICONS[meta.icon] ?? "✨";
                 return (
-                  <li key={b.badge_id}>
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="text-2xl">{icon}</div>
+                  <li key={b.badge_id} className="h-full">
+                    <Card className="flex h-full">
+                      <CardContent className="flex w-full flex-col gap-1 p-4">
+                        <div className="text-2xl leading-none">{icon}</div>
                         <p className="mt-1 font-medium">{meta.name}</p>
-                        <p className="text-xs text-[var(--muted-foreground)]">{meta.description}</p>
+                        <p className="text-xs text-[var(--muted-foreground)] line-clamp-3">
+                          {meta.description}
+                        </p>
                       </CardContent>
                     </Card>
                   </li>

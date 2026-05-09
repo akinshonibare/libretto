@@ -111,10 +111,13 @@ export default async function LibraryPage() {
               const book = r.books;
               const teaser = teaserByReview.get(r.id);
               return (
-                <li key={r.id}>
-                  <Link href={`/library/${r.id}`} className="block focus:outline-none">
-                    <Card className="h-full transition-colors hover:border-[var(--ring)]">
-                      <CardContent className="flex gap-4 p-4">
+                <li key={r.id} className="h-full">
+                  <Link
+                    href={`/library/${r.id}`}
+                    className="block h-full focus:outline-none"
+                  >
+                    <Card className="flex h-full transition-colors hover:border-[var(--ring)]">
+                      <CardContent className="flex w-full gap-4 p-4">
                         {book?.cover_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -127,7 +130,7 @@ export default async function LibraryPage() {
                             <BookOpen className="size-5 text-[var(--muted-foreground)]" />
                           </div>
                         )}
-                        <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 flex-1 flex-col">
                           <div className="flex flex-wrap items-center gap-1.5 text-xs">
                             <Badge variant="outline">{STATUS_LABEL[r.status] ?? r.status}</Badge>
                             <Badge variant="secondary">{MODE_LABEL[r.reading_mode]}</Badge>
@@ -144,11 +147,17 @@ export default async function LibraryPage() {
                           {book?.author && (
                             <p className="mt-0.5 text-sm text-[var(--muted-foreground)]">{book.author}</p>
                           )}
-                          {teaser && (
-                            <p className="prose-quote mt-2 line-clamp-2 text-sm leading-snug">
-                              &ldquo;{teaser}&rdquo;
-                            </p>
-                          )}
+                          <div className="mt-auto pt-2">
+                            {teaser ? (
+                              <p className="prose-quote line-clamp-2 text-sm leading-snug">
+                                &ldquo;{teaser}&rdquo;
+                              </p>
+                            ) : (
+                              <p className="text-xs text-[var(--muted-foreground)] italic">
+                                No highlights yet.
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
