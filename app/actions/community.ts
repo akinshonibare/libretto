@@ -268,7 +268,9 @@ export async function postClubMessageAction(formData: FormData): Promise<void> {
   });
   if (!parsed.success) return;
 
-  if (looksLikeSpam(parsed.data.body)) return;
+  // Spam filter intentionally inactive — rate limit + RLS-gated membership +
+  // reports are enough for v1. Helper kept; re-enable here if abuse picks up.
+  // if (looksLikeSpam(parsed.data.body)) return;
 
   // Rate limit: 1 message per 2 seconds per user.
   const twoSecondsAgo = new Date(Date.now() - 2000).toISOString();

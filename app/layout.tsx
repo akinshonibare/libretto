@@ -3,6 +3,7 @@ import { Inter, Lora } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ServiceWorkerRegister } from "@/components/sw-register";
+import { PageDecor } from "@/components/page-decor";
 import { readThemeCookie } from "@/lib/theme-cookie";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +54,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)]">
+        <PageDecor />
         <ThemeProvider initial={theme}>{children}</ThemeProvider>
         <ServiceWorkerRegister />
       </body>
