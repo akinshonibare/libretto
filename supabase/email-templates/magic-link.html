@@ -1,0 +1,123 @@
+<!--
+  Libretto — Magic Link email template (Supabase Auth)
+  Source of truth lives here, in the repo. Copy this file's contents into:
+    Supabase Dashboard → Authentication → Email Templates → Magic Link
+
+  Variables Supabase substitutes at send time:
+    {{ .ConfirmationURL }}  — magic-link URL (one-time, expires in 1 hour)
+    {{ .SiteURL }}          — value from Auth → URL Configuration → Site URL
+    {{ .Email }}            — recipient address
+
+  Notes
+   - Email HTML is finicky: tables, inline styles, no flexbox. Avoid CSS vars.
+   - Colors approximate the in-app Greenroom palette in plain hex so they hold
+     up across Apple Mail, Gmail, Outlook, dark/light mode.
+   - Subject lives in the Supabase template editor's Subject field, not in
+     this file. Set it to:  Sign in to Libretto
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
+    <title>Sign in to Libretto</title>
+    <style>
+      /* Email clients that respect <style> get the niceties; the rest fall
+         back to inline styles below. */
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f5efe2;
+        font-family: -apple-system, BlinkMacSystemFont, "Inter",
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: #2e2618;
+      }
+      a { color: #1f4d2a; }
+      .libretto-btn:hover { background-color: #163a1f !important; }
+      @media (prefers-color-scheme: dark) {
+        body { background-color: #1a1612 !important; color: #e8dfca !important; }
+        .card { background-color: #221d17 !important; border-color: #38302a !important; }
+        .muted { color: #a89a82 !important; }
+        .libretto-btn { background-color: #d9a55b !important; color: #1a1612 !important; }
+      }
+    </style>
+  </head>
+  <body style="margin:0;padding:0;background-color:#f5efe2;font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#2e2618;">
+    <!-- Preheader: appears as preview text in inbox lists. Hidden in body. -->
+    <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
+      Click to sign in. This link expires in an hour.
+    </div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5efe2;">
+      <tr>
+        <td align="center" style="padding:40px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;">
+            <!-- Header — wordmark -->
+            <tr>
+              <td align="left" style="padding:0 8px 28px;">
+                <span style="font-family:'Lora',Georgia,'Times New Roman',serif;font-size:22px;font-weight:600;letter-spacing:-0.01em;color:#2e2618;">
+                  Libretto
+                </span>
+              </td>
+            </tr>
+
+            <!-- Card -->
+            <tr>
+              <td class="card" style="background-color:#fdfaf2;border:1px solid #e2d8c1;border-radius:12px;padding:36px 32px;">
+                <h1 style="margin:0 0 12px;font-family:'Lora',Georgia,'Times New Roman',serif;font-size:28px;line-height:1.2;font-weight:600;color:#2e2618;letter-spacing:-0.01em;">
+                  Sign in to Libretto
+                </h1>
+                <p style="margin:0 0 24px;font-size:15px;line-height:1.55;color:#5a4d36;">
+                  Tap the button below to open your library. This link expires in
+                  an hour and can only be used once.
+                </p>
+
+                <!-- Bulletproof button (table, not <a> w/ display:block — Outlook safe) -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
+                  <tr>
+                    <td align="center" bgcolor="#1f4d2a" style="border-radius:8px;">
+                      <a class="libretto-btn"
+                         href="{{ .ConfirmationURL }}"
+                         target="_blank"
+                         style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:600;color:#f5efe2;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;border-radius:8px;background-color:#1f4d2a;">
+                        Open Libretto
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p class="muted" style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#7d6a4a;">
+                  If the button doesn&rsquo;t work, paste this into your browser:
+                </p>
+                <p style="margin:0;font-size:12px;line-height:1.5;word-break:break-all;color:#1f4d2a;">
+                  <a href="{{ .ConfirmationURL }}" style="color:#1f4d2a;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+                </p>
+
+                <hr style="border:none;border-top:1px solid #e2d8c1;margin:28px 0;" />
+
+                <p class="muted" style="margin:0;font-size:12px;line-height:1.5;color:#8a7858;">
+                  Didn&rsquo;t request this? You can ignore this email — your
+                  account is safe and nothing changes unless the link is opened.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td align="center" style="padding:24px 8px 0;">
+                <p class="muted" style="margin:0 0 4px;font-family:'Lora',Georgia,'Times New Roman',serif;font-style:italic;font-size:13px;color:#8a7858;">
+                  A small, humble place for the books you read.
+                </p>
+                <p class="muted" style="margin:0;font-size:11px;color:#a89a82;">
+                  <a href="{{ .SiteURL }}" style="color:#8a7858;text-decoration:none;">{{ .SiteURL }}</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
