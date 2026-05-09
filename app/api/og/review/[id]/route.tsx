@@ -90,7 +90,11 @@ export async function GET(
                 Libretto
               </span>
               {review.rating ? (
-                <span style={{ fontSize: 28, color: "#c89a5b" }}>{"★".repeat(review.rating)}</span>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {Array.from({ length: review.rating }).map((_, i) => (
+                    <Star key={i} />
+                  ))}
+                </div>
               ) : null}
             </div>
             <div
@@ -116,7 +120,9 @@ export async function GET(
                   fontStyle: "italic",
                 }}
               >
-                &ldquo;{review.why.slice(0, 180)}{review.why.length > 180 ? "…" : ""}&rdquo;
+                {/* ASCII quotes — curly quotes (U+201C, U+201D) and "…" (U+2026)
+                    fall back to next/og's dynamic-font fetcher, which can 400. */}
+                {`"${review.why.slice(0, 180)}${review.why.length > 180 ? "..." : ""}"`}
               </div>
             ) : null}
             <div
@@ -135,5 +141,18 @@ export async function GET(
       </div>
     ),
     { width: 1200, height: 630 }
+  );
+}
+
+/**
+ * Inline star — drawn as SVG so we don't depend on a font glyph that
+ * next/og can't satisfy from its bundled fonts. The previous "★" character
+ * triggered a dynamic-font fetch that 500'd the route.
+ */
+function Star() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="#c89a5b">
+      <path d="M12 2 14.9 8.6 22 9.3 16.5 14 18.2 21 12 17.3 5.8 21 7.5 14 2 9.3 9.1 8.6Z" />
+    </svg>
   );
 }

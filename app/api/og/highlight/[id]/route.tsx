@@ -32,7 +32,9 @@ export async function GET(
 
   const book = { title: h.book_title, author: h.book_author };
   const handle = h.author_handle ?? "";
-  const quote = h.body.length > 280 ? h.body.slice(0, 277) + "…" : h.body;
+  // ASCII-only quote — next/og's bundled font lacks curly quotes (U+201C/U+201D)
+  // and the ellipsis (U+2026), and the dynamic-font fallback occasionally 400s.
+  const quote = h.body.length > 280 ? h.body.slice(0, 277) + "..." : h.body;
 
   return new ImageResponse(
     (
@@ -56,7 +58,7 @@ export async function GET(
             color: "#8a7a5a",
           }}
         >
-          Libretto · highlight
+          Libretto - highlight
         </span>
         <div
           style={{
@@ -68,7 +70,7 @@ export async function GET(
             fontWeight: 500,
           }}
         >
-          &ldquo;{quote}&rdquo;
+          {`"${quote}"`}
         </div>
         <div
           style={{
@@ -82,7 +84,7 @@ export async function GET(
         >
           <span>
             {book?.title ?? "Untitled"}
-            {book?.author ? ` · ${book.author}` : ""}
+            {book?.author ? ` - ${book.author}` : ""}
           </span>
           <span>@{handle}</span>
         </div>
