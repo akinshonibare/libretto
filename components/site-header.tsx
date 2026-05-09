@@ -5,12 +5,9 @@ import { getSessionContext } from "@/lib/auth-helpers";
 
 /**
  * One header for all public + authed routes. Adapts based on whether the
- * viewer is signed in:
- *   - Signed in: full nav (Home / Library / Today / Discover / @handle / Theme / Sign out)
- *   - Signed out: minimal nav (Theme / Sign in)
- *
- * This is a server component — uses the React-cached getSessionContext so
- * multiple renders in one request don't re-hit Supabase.
+ * viewer is signed in. Server component — uses the React-cached
+ * getSessionContext so the layout, page, and nested components share one
+ * session lookup per request.
  */
 export async function SiteHeader() {
   const { profile } = await getSessionContext();
@@ -27,10 +24,12 @@ export async function SiteHeader() {
               <NavLink href="/dashboard">Home</NavLink>
               <NavLink href="/library">Library</NavLink>
               <NavLink href="/today">Today</NavLink>
+              <NavLink href="/feed">Feed</NavLink>
+              <NavLink href="/clubs">Clubs</NavLink>
               <NavLink href="/discover">Discover</NavLink>
               <NavLink href="/graph">Graph</NavLink>
               <NavLink href={`/u/${profile.handle}`}>@{profile.handle}</NavLink>
-              <NavLink href="/settings">Theme</NavLink>
+              <NavLink href="/settings">Settings</NavLink>
               <form action={signOutAction}>
                 <Button variant="outline" size="sm" type="submit">
                   Sign out

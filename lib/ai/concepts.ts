@@ -20,12 +20,13 @@ Rules:
   • Skip generic filler ("Idea", "Story", "Reading"). If nothing meaningful, return an empty array.
   • Return VALID JSON only — no preamble, no Markdown fences.`;
 
+// Anthropic structured outputs reject array-level constraints (maxItems/minItems);
+// cap to 4 concepts after parsing instead.
 const OUTPUT_SCHEMA = {
   type: "object",
   properties: {
     concepts: {
       type: "array",
-      maxItems: 4,
       items: {
         type: "object",
         properties: {
@@ -88,7 +89,7 @@ export async function processHighlightConcepts(
 
   const userPrompt = `<book>${book.title}${
     book.author ? ` — ${book.author}` : ""
-  }</book>\n\n<highlight>${highlight.body.slice(0, 2000)}</highlight>\n\nReturn JSON.`;
+  }</book>\n\n<highlight>${highlight.body.slice(0, 2000)}</highlight>\n\nReturn JSON with up to 4 concepts.`;
 
   const response = await client.messages.create({
     model: CLAUDE_HAIKU_MODEL,
@@ -135,6 +136,7 @@ export async function processHighlightConcepts(
     if (!slug || seen.has(slug)) continue;
     seen.add(slug);
     labels.push({ slug, label });
+    if (labels.length >= 4) break;
   }
   if (labels.length === 0) return 0;
 

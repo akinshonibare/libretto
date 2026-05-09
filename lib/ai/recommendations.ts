@@ -199,6 +199,8 @@ Style:
   • Avoid books you can tell from context the user has already read.
   • Output VALID JSON only — no preamble, no commentary, no Markdown fences.`;
 
+// Anthropic structured outputs don't accept array-level constraints
+// (maxItems, minItems). The TOP_N cap is enforced after parsing.
 const RANK_OUTPUT_SCHEMA = {
   type: "object",
   properties: {
@@ -208,7 +210,6 @@ const RANK_OUTPUT_SCHEMA = {
     },
     picks: {
       type: "array",
-      maxItems: TOP_N,
       items: {
         type: "object",
         properties: {
@@ -257,7 +258,7 @@ async function rankWithClaude(
     )
     .join("\n");
 
-  const userPrompt = `<reading_profile>\n${profile}\n</reading_profile>\n\n<candidates>\n${candidatesText}\n</candidates>\n\nReturn JSON matching the schema.`;
+  const userPrompt = `<reading_profile>\n${profile}\n</reading_profile>\n\n<candidates>\n${candidatesText}\n</candidates>\n\nReturn JSON matching the schema. Limit to ${TOP_N} picks max.`;
 
   const response = await client.messages.create({
     model: CLAUDE_HAIKU_MODEL,

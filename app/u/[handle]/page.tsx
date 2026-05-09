@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SiteHeader } from "@/components/site-header";
 import { FollowButton } from "@/components/follow-button";
@@ -92,14 +93,23 @@ export default async function PublicProfilePage({
               {followingCount ?? 0} following
             </p>
           </div>
-          {viewer && (
-            <FollowButton
-              targetUserId={profile.id}
-              targetHandle={profile.handle}
-              isFollowing={isFollowing}
-              isSelf={isSelf}
-            />
-          )}
+          <div className="flex items-center gap-2">
+            {isSelf && (
+              <Link href="/settings">
+                <Button size="sm" variant="outline">
+                  <Settings className="size-4" /> Edit profile
+                </Button>
+              </Link>
+            )}
+            {viewer && (
+              <FollowButton
+                targetUserId={profile.id}
+                targetHandle={profile.handle}
+                isFollowing={isFollowing}
+                isSelf={isSelf}
+              />
+            )}
+          </div>
         </header>
 
       <h2 className="mt-10 font-heading text-xl">Public reading</h2>
