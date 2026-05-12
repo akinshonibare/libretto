@@ -1,4 +1,6 @@
 import type { ChapterNoteRow, HighlightRow } from "@/lib/queries";
+import { EditableHighlight } from "@/components/editable-highlight";
+import { EditableNote } from "@/components/editable-note";
 
 /**
  * The marginalia layout — pulled from the design system bundle.
@@ -11,6 +13,7 @@ import type { ChapterNoteRow, HighlightRow } from "@/lib/queries";
  *   - note: plain prose, indented to match
  */
 type Props = {
+  reviewId: string;
   highlights: HighlightRow[];
   notes: ChapterNoteRow[];
   emptyMessage?: string;
@@ -20,7 +23,7 @@ type Item =
   | { kind: "highlight"; entry: HighlightRow; sortKey: [number, string] }
   | { kind: "note"; entry: ChapterNoteRow; sortKey: [number, string] };
 
-export function Marginalia({ highlights, notes, emptyMessage }: Props) {
+export function Marginalia({ reviewId, highlights, notes, emptyMessage }: Props) {
   const items: Item[] = [
     ...highlights.map<Item>((h) => ({
       kind: "highlight",
@@ -71,12 +74,12 @@ export function Marginalia({ highlights, notes, emptyMessage }: Props) {
           return (
             <div key={`h-${h.id}`}>
               {chapterDivider}
-              <div className="marginalia-highlight">
-                <p className="prose-quote text-base leading-relaxed">&ldquo;{h.body}&rdquo;</p>
-                {h.page != null && (
-                  <p className="mt-1.5 text-xs text-[var(--muted-foreground)]">p. {h.page}</p>
-                )}
-              </div>
+              <EditableHighlight
+                id={h.id}
+                reviewId={reviewId}
+                body={h.body}
+                page={h.page}
+              />
             </div>
           );
         }
@@ -85,15 +88,14 @@ export function Marginalia({ highlights, notes, emptyMessage }: Props) {
         return (
           <div key={`n-${n.id}-${idx}`}>
             {chapterDivider}
-            <div className="pl-3.5">
-              {n.label && !chapterDivider && (
-                <p className="text-xs font-medium text-[var(--muted-foreground)]">{n.label}</p>
-              )}
-              <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed">{n.body}</p>
-              {n.page != null && (
-                <p className="mt-1 text-xs text-[var(--muted-foreground)]">p. {n.page}</p>
-              )}
-            </div>
+            <EditableNote
+              id={n.id}
+              reviewId={reviewId}
+              body={n.body}
+              label={n.label}
+              page={n.page}
+              showLabel={!chapterDivider}
+            />
           </div>
         );
       })}

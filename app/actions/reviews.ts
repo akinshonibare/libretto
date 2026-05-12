@@ -128,6 +128,59 @@ export async function createReviewAction(formData: FormData): Promise<CreateRevi
   return { ok: true, reviewId: review.id };
 }
 
+const ReviewUpdateInput = z.object({
+  reviewId: z.string().uuid(),
+  status: z.enum(READING_STATUSES).default("reading"),
+  rating: z.coerce.number().int().min(1).max(5).optional(),
+  liked: z.enum(["yes", "no", "unset"]).default("unset"),
+  why: z.string().max(4000).optional(),
+  synopsis: z.string().max(4000).optional(),
+  readingMode: z.enum(READING_MODES).default("enjoy"),
+  isPublic: z.enum(["on", "off"]).default("off"),
+});
+
+export type UpdateReviewResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function updateReviewAction(formData: FormData): Promise<UpdateReviewResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "You need to be signed in." };
+
+  const parsed = ReviewUpdateInput.safeParse(fdToObject(formData));
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+  const input = parsed.data;
+
+  const { error } = await supabase
+    .from("reviews")
+    .update({
+      status: input.status as ReadingStatus,
+      rating: input.rating ?? null,
+      liked: input.liked === "yes" ? true : input.liked === "no" ? false : null,
+      why: input.why || null,
+      synopsis: input.synopsis || null,
+      reading_mode: input.readingMode as ReadingMode,
+      is_public: input.isPublic === "on",
+    })
+    .eq("id", input.reviewId)
+    .eq("user_id", user.id);
+
+  if (error) return { ok: false, error: error.message };
+
+  await touchStreak(supabase, user.id);
+  await checkAndAwardBadges(supabase, user.id);
+
+  revalidatePath("/library");
+  revalidatePath(`/library/${input.reviewId}`);
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
 export async function deleteReviewAction(reviewId: string) {
   const supabase = await createClient();
   const {
@@ -157,23 +210,6 @@ export async function addChapterNoteAction(formData: FormData) {
   const parsed = ChapterNoteInput.safeParse(fdToObject(formData));
   if (!parsed.success) return;
 
-  // Dedupe: there are two chapter-note forms (review page and session page)
-  // wired to this action. Submitting from one then the other previously
-  // created two identical rows. Skip the insert if an equivalent note was
-  // saved in the last 60 seconds.
-  const sixtySecondsAgo = new Date(Date.now() - 60_000).toISOString();
-  const { data: dupes } = await supabase
-    .from("chapter_notes")
-    .select("id")
-    .eq("review_id", parsed.data.reviewId)
-    .eq("body", parsed.data.body)
-    .gte("created_at", sixtySecondsAgo)
-    .limit(1);
-  if (dupes && dupes.length > 0) {
-    revalidatePath(`/library/${parsed.data.reviewId}`);
-    return;
-  }
-
   const { error } = await supabase.from("chapter_notes").insert({
     review_id: parsed.data.reviewId,
     label: parsed.data.label || null,
@@ -183,4 +219,54 @@ export async function addChapterNoteAction(formData: FormData) {
   if (error) console.error("[chapter_notes]", error);
   await touchStreak(supabase, user.id);
   revalidatePath(`/library/${parsed.data.reviewId}`);
+}
+
+const ChapterNoteUpdateInput = z.object({
+  id: z.string().uuid(),
+  reviewId: z.string().uuid(),
+  label: z.string().max(200).optional(),
+  body: z.string().min(1, "Note can't be empty.").max(4000),
+  page: z.coerce.number().int().min(0).max(99999).optional(),
+});
+
+export type UpdateChapterNoteResult = { ok: true } | { ok: false; error: string };
+
+export async function updateChapterNoteAction(
+  formData: FormData
+): Promise<UpdateChapterNoteResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "You need to be signed in." };
+
+  const parsed = ChapterNoteUpdateInput.safeParse(fdToObject(formData));
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  const { error } = await supabase
+    .from("chapter_notes")
+    .update({
+      label: parsed.data.label || null,
+      body: parsed.data.body,
+      page: parsed.data.page ?? null,
+    })
+    .eq("id", parsed.data.id);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/library/${parsed.data.reviewId}`);
+  return { ok: true };
+}
+
+export async function deleteChapterNoteAction(noteId: string, reviewId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/sign-in");
+
+  await supabase.from("chapter_notes").delete().eq("id", noteId);
+  revalidatePath(`/library/${reviewId}`);
 }

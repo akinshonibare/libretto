@@ -5,22 +5,17 @@ import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { ShareMenu } from "@/components/share-menu";
 import { PublicToggle } from "@/components/public-toggle";
 import { SocraticChat } from "@/components/socratic-chat";
 import { Marginalia } from "@/components/marginalia";
+import { ReviewEditor } from "@/components/review-editor";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth-helpers";
 import { getSiteUrl } from "@/lib/site";
 import { isAnthropicConfigured } from "@/lib/ai/anthropic";
 import type { ChapterNoteRow, HighlightRow, ReviewDetailRow } from "@/lib/queries";
-import {
-  addChapterNoteAction,
-  deleteReviewAction,
-} from "@/app/actions/reviews";
+import { deleteReviewAction } from "@/app/actions/reviews";
 import { startSessionAction } from "@/app/actions/sessions";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -169,44 +164,26 @@ export default async function ReviewPage({
           </Card>
         </Section>
 
-        {review.why && (
-          <Section title="Why">
-            <p className="whitespace-pre-wrap leading-relaxed">{review.why}</p>
-          </Section>
-        )}
-        {review.synopsis && (
-          <Section title="Synopsis">
-            <p className="whitespace-pre-wrap leading-relaxed">{review.synopsis}</p>
-          </Section>
-        )}
+        <Section title="Your review">
+          <ReviewEditor
+            reviewId={review.id}
+            status={review.status}
+            rating={review.rating}
+            liked={review.liked}
+            why={review.why}
+            synopsis={review.synopsis}
+            readingMode={review.reading_mode}
+            isPublic={review.is_public}
+          />
+        </Section>
 
         <Section title="Marginalia">
           <Marginalia
+            reviewId={review.id}
             highlights={highlights ?? []}
             notes={notes ?? []}
-            emptyMessage="No marginalia yet — start a session above to capture highlights, or add a chapter note below."
+            emptyMessage="No marginalia yet — start a reading session above to capture highlights and notes."
           />
-
-          <form action={addChapterNoteAction} className="mt-6 space-y-3 rounded-md border border-[var(--border)] bg-[var(--card)] p-4">
-            <input type="hidden" name="reviewId" value={review.id} />
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2 space-y-1.5">
-                <Label htmlFor="label">Chapter / heading</Label>
-                <Input id="label" name="label" placeholder="e.g. Ch. 4 — The Halls" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="page">Page</Label>
-                <Input id="page" name="page" type="number" min={0} />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="body">Note</Label>
-              <Textarea id="body" name="body" rows={3} placeholder="What stood out, a quote, a thought" required />
-            </div>
-            <Button type="submit" size="sm">
-              Add note
-            </Button>
-          </form>
         </Section>
 
         <Section title="Socratic chat">

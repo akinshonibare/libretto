@@ -5,10 +5,8 @@ import { useRouter } from "next/navigation";
 import { Search, Loader2, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { createReviewAction } from "@/app/actions/reviews";
 import type { OpenLibraryBook } from "@/lib/openlibrary";
 
@@ -79,57 +77,10 @@ export function ReviewForm() {
       </section>
 
       <section className="space-y-3">
-        <Label>Status</Label>
-        <RadioRow
-          name="status"
-          options={[
-            { value: "reading", label: "Reading" },
-            { value: "finished", label: "Finished" },
-            { value: "dnf", label: "DNF" },
-          ]}
-          defaultValue="reading"
-        />
-      </section>
-
-      <section className="space-y-3">
-        <Label>Rating</Label>
-        <RadioRow
-          name="rating"
-          options={[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: "★".repeat(n) }))}
-          allowEmpty="No rating"
-        />
-      </section>
-
-      <section className="space-y-3">
-        <Label>Did you like it?</Label>
-        <RadioRow
-          name="liked"
-          options={[
-            { value: "yes", label: "Yes" },
-            { value: "no", label: "No" },
-            { value: "unset", label: "Unsure" },
-          ]}
-          defaultValue="unset"
-        />
-      </section>
-
-      <section className="space-y-1.5">
-        <Label htmlFor="why">Why?</Label>
-        <Textarea id="why" name="why" rows={3} placeholder="What stuck with you, what didn't" />
-      </section>
-
-      <section className="space-y-1.5">
-        <Label htmlFor="synopsis">Your synopsis</Label>
-        <Textarea
-          id="synopsis"
-          name="synopsis"
-          rows={5}
-          placeholder="The book in your own words"
-        />
-      </section>
-
-      <section className="space-y-3">
         <Label>Reading mode</Label>
+        <p className="text-sm text-[var(--muted-foreground)]">
+          How do you want to read this? You can change this later.
+        </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           {READING_MODES.map((m) => (
             <label
@@ -147,7 +98,7 @@ export function ReviewForm() {
       <section className="flex items-center gap-2">
         <input type="checkbox" name="isPublic" id="isPublic" defaultChecked value="on" />
         <Label htmlFor="isPublic" className="cursor-pointer">
-          Make this review public
+          Make this book public on your profile
         </Label>
       </section>
 
@@ -160,7 +111,7 @@ export function ReviewForm() {
       <div className="flex items-center gap-2">
         <Button type="submit" disabled={pending || !(book || manual)}>
           {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-          Save review
+          Add to library
         </Button>
         <Button type="button" variant="ghost" onClick={() => router.back()}>
           Cancel
@@ -380,43 +331,3 @@ function ManualField({
   );
 }
 
-function RadioRow({
-  name,
-  options,
-  defaultValue,
-  allowEmpty,
-}: {
-  name: string;
-  options: Array<{ value: string; label: string }>;
-  defaultValue?: string;
-  allowEmpty?: string;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {allowEmpty && (
-        <label className={cn(pillClasses, "has-[:checked]:border-[var(--ring)] has-[:checked]:bg-[var(--accent)]/30")}>
-          <input type="radio" name={name} value="" defaultChecked={!defaultValue} className="sr-only" />
-          {allowEmpty}
-        </label>
-      )}
-      {options.map((o) => (
-        <label
-          key={o.value}
-          className={cn(pillClasses, "has-[:checked]:border-[var(--ring)] has-[:checked]:bg-[var(--accent)]/30")}
-        >
-          <input
-            type="radio"
-            name={name}
-            value={o.value}
-            defaultChecked={defaultValue === o.value}
-            className="sr-only"
-          />
-          {o.label}
-        </label>
-      ))}
-    </div>
-  );
-}
-
-const pillClasses =
-  "cursor-pointer rounded-full border border-[var(--border)] px-3 py-1 text-sm";
