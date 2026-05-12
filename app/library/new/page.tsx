@@ -18,7 +18,7 @@ export default async function NewReviewPage() {
         </Link>
         <h1 className="mt-6 font-heading text-4xl tracking-tight">Add a book</h1>
         <p className="mt-2 text-[var(--muted-foreground)]">
-          Search OpenLibrary or enter the details by hand.
+          Just add the book to your library — write your review later, once you&rsquo;ve had time with it.
         </p>
         <div className="mt-8">
           <ReviewForm />

@@ -3,11 +3,11 @@ import { notFound } from "next/navigation";
 import { ChevronLeft, BookOpen, StopCircle } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { EditableHighlight } from "@/components/editable-highlight";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth-helpers";
 import { addHighlightAction } from "@/app/actions/highlights";
@@ -154,14 +154,13 @@ export default async function SessionPage({
             <ul className="space-y-3">
               {highlights.map((h) => (
                 <li key={h.id}>
-                  <Card>
-                    <CardContent className="p-4">
-                      <p className="prose-quote text-base">&ldquo;{h.body}&rdquo;</p>
-                      {h.page != null && (
-                        <p className="mt-2 text-xs text-[var(--muted-foreground)]">p. {h.page}</p>
-                      )}
-                    </CardContent>
-                  </Card>
+                  <EditableHighlight
+                    id={h.id}
+                    reviewId={reviewId}
+                    body={h.body}
+                    page={h.page}
+                    variant="card"
+                  />
                 </li>
               ))}
             </ul>

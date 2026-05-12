@@ -81,3 +81,45 @@ export async function deleteHighlightAction(highlightId: string, reviewId: strin
   await supabase.from("highlights").delete().eq("id", highlightId);
   revalidatePath(`/library/${reviewId}`);
 }
+
+const HighlightUpdateInput = z.object({
+  id: z.string().uuid(),
+  reviewId: z.string().uuid(),
+  body: z.string().min(1, "Highlight is empty.").max(4000),
+  page: z.coerce.number().int().min(0).max(99999).optional(),
+});
+
+export type UpdateHighlightResult = { ok: true } | { ok: false; error: string };
+
+export async function updateHighlightAction(
+  formData: FormData
+): Promise<UpdateHighlightResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "You need to be signed in." };
+
+  const parsed = HighlightUpdateInput.safeParse({
+    id: formData.get("id"),
+    reviewId: formData.get("reviewId"),
+    body: formData.get("body"),
+    page: formData.get("page") || undefined,
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  const { error } = await supabase
+    .from("highlights")
+    .update({
+      body: parsed.data.body,
+      page: parsed.data.page ?? null,
+    })
+    .eq("id", parsed.data.id);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/library/${parsed.data.reviewId}`);
+  return { ok: true };
+}
