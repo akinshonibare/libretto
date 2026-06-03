@@ -138,7 +138,7 @@ function ItemActions({
   disabled: boolean;
 }) {
   return (
-    <div className="absolute right-0 top-0 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+    <div className="absolute right-0 top-0 flex gap-1">
       <button
         type="button"
         onClick={onEdit}
