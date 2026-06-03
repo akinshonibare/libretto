@@ -118,7 +118,11 @@ export function GraphCanvas({ data }: Props) {
             onBackgroundClick={() => {
               if (isMobile) clearSelection();
             }}
-            cooldownTicks={300}
+            enableNodeDrag={false}
+            cooldownTicks={120}
+            onEngineStop={() => {
+              fgRef.current?.zoomToFit?.(400, 60);
+            }}
             nodeCanvasObjectMode={() => "after"}
             nodeCanvasObject={(
               node: GraphNode & { x?: number; y?: number },
@@ -129,13 +133,24 @@ export function GraphCanvas({ data }: Props) {
               const basePx = isMobile ? 15 : 12;
               const fontSize = Math.max(minPx, basePx / globalScale);
               ctx.font = `${fontSize}px serif`;
-              ctx.fillStyle = "var(--foreground)";
               ctx.textAlign = "center";
               ctx.textBaseline = "top";
               const x = node.x ?? 0;
               const y = node.y ?? 0;
               const radiusPad = (isMobile ? 9 : 6) + Math.sqrt(node.highlightCount) * 2;
-              ctx.fillText(node.label, x, y + radiusPad);
+              const textY = y + radiusPad;
+              const metrics = ctx.measureText(node.label);
+              const padX = 4;
+              const padY = 2;
+              ctx.fillStyle = "rgba(255,255,255,0.82)";
+              ctx.fillRect(
+                x - metrics.width / 2 - padX,
+                textY - padY,
+                metrics.width + padX * 2,
+                fontSize + padY * 2
+              );
+              ctx.fillStyle = "#1c1917";
+              ctx.fillText(node.label, x, textY);
             }}
           />
         )}
