@@ -18,20 +18,31 @@ const fs = require("node:fs");
 
 const DB_URL = process.env.SUPABASE_DB_URL;
 const ON_VERCEL = !!process.env.VERCEL;
+// VERCEL_ENV is "production" | "preview" | "development".
+// Preview builds don't have DB access; skip migrations there so the build
+// still succeeds. Production must always have SUPABASE_DB_URL set or fail loud.
+const VERCEL_ENV = process.env.VERCEL_ENV;
+const IS_PROD_TARGET = ON_VERCEL && VERCEL_ENV === "production";
 
 if (!DB_URL) {
-  if (ON_VERCEL) {
-    // On Vercel SUPABASE_DB_URL must be set — silently skipping caused a
-    // migration to ship to prod without applying for ~one deploy cycle. Fail
-    // the build instead so it's caught immediately.
+  if (IS_PROD_TARGET) {
+    // On Vercel SUPABASE_DB_URL must be set for prod — silently skipping
+    // caused a migration to ship to prod without applying for ~one deploy
+    // cycle. Fail the build instead so it's caught immediately.
     console.error(
-      "[migrate] SUPABASE_DB_URL is missing on Vercel.\n" +
+      "[migrate] SUPABASE_DB_URL is missing on Vercel (production).\n" +
         "        Set it under Project Settings → Environment Variables\n" +
         "        (Session-pooler connection string from Supabase, port 5432)."
     );
     process.exit(1);
   }
-  console.log("[migrate] SUPABASE_DB_URL not set — skipping migrations (local build)");
+  if (ON_VERCEL) {
+    console.log(
+      `[migrate] SUPABASE_DB_URL not set — skipping migrations (Vercel ${VERCEL_ENV ?? "preview"} build)`
+    );
+  } else {
+    console.log("[migrate] SUPABASE_DB_URL not set — skipping migrations (local build)");
+  }
   process.exit(0);
 }
 
