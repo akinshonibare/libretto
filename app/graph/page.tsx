@@ -2,7 +2,7 @@ import { Network, Loader2, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { GraphCanvas } from "@/components/graph-canvas";
+import { ConceptMap } from "@/components/concept-map";
 import { requireUser } from "@/lib/auth-helpers";
 import { createClient } from "@/lib/supabase/server";
 import { loadKnowledgeGraph } from "@/lib/graph-data";
@@ -26,7 +26,7 @@ export default async function GraphPage() {
               <h1 className="font-heading text-4xl tracking-tight">Your mind, mapped</h1>
             </div>
             <p className="mt-2 text-[var(--muted-foreground)]">
-              Concepts auto-extracted from your highlights. Lines connect ideas that show up across the same book.
+              Concepts auto-extracted from your highlights. Tap any chip to follow a thread across your library.
             </p>
           </div>
           <form action={rebuildAndReturn}>
@@ -54,8 +54,8 @@ export default async function GraphPage() {
           </Card>
         ) : (
           <div className="mt-8">
-            <GraphCanvas data={data} />
-            <p className="mt-4 text-xs text-[var(--muted-foreground)]">
+            <ConceptMap data={data} />
+            <p className="mt-6 text-xs text-[var(--muted-foreground)]">
               {data.nodes.length} concept{data.nodes.length === 1 ? "" : "s"} ·{" "}
               {data.edges.length} connection{data.edges.length === 1 ? "" : "s"}.
             </p>
