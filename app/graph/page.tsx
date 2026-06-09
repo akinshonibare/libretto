@@ -3,18 +3,42 @@ import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConceptMap } from "@/components/concept-map";
+import { BookFilter } from "@/components/book-filter";
 import { requireUser } from "@/lib/auth-helpers";
 import { createClient } from "@/lib/supabase/server";
-import { loadKnowledgeGraph } from "@/lib/graph-data";
+import { loadBooksWithConcepts, loadKnowledgeGraph } from "@/lib/graph-data";
 import { isAnthropicConfigured } from "@/lib/ai/anthropic";
 import { rebuildConceptGraphAction } from "@/app/actions/concepts";
 
 export const dynamic = "force-dynamic";
 
-export default async function GraphPage() {
+type GraphPageProps = {
+  searchParams: Promise<{ book?: string }>;
+};
+
+export default async function GraphPage({ searchParams }: GraphPageProps) {
   const { profile } = await requireUser();
   const supabase = await createClient();
-  const data = await loadKnowledgeGraph(supabase, profile.id);
+  const { book: bookParam } = await searchParams;
+
+  const books = await loadBooksWithConcepts(supabase, profile.id);
+  const bookIds = new Set(books.map((b) => b.id));
+
+  // Resolve the active book id:
+  //   - explicit ?book=<id> wins (when valid)
+  //   - ?book=all → cross-book view
+  //   - no param → default to most recently highlighted book (books[0])
+  let selectedBookId: string | null = null;
+  if (bookParam === "all") {
+    selectedBookId = null;
+  } else if (bookParam && bookIds.has(bookParam)) {
+    selectedBookId = bookParam;
+  } else if (books.length > 0) {
+    selectedBookId = books[0].id;
+  }
+
+  const data = await loadKnowledgeGraph(supabase, profile.id, selectedBookId);
+  const selectedBook = books.find((b) => b.id === selectedBookId) ?? null;
 
   return (
     <AppShell handle={profile.handle}>
@@ -26,7 +50,9 @@ export default async function GraphPage() {
               <h1 className="font-heading text-4xl tracking-tight">Your mind, mapped</h1>
             </div>
             <p className="mt-2 text-[var(--muted-foreground)]">
-              Concepts auto-extracted from your highlights. Tap any chip to follow a thread across your library.
+              {selectedBook
+                ? `Concepts from ${selectedBook.title}. Tap any chip to follow a thread.`
+                : "Concepts across every book in your library. Tap any chip to follow a thread."}
             </p>
           </div>
           <form action={rebuildAndReturn}>
@@ -35,6 +61,18 @@ export default async function GraphPage() {
             </Button>
           </form>
         </div>
+
+        {books.length > 1 && (
+          <div className="mt-6">
+            <BookFilter
+              basePath="/graph"
+              allHref="/graph?book=all"
+              options={books}
+              selectedId={selectedBookId}
+              label="Scope"
+            />
+          </div>
+        )}
 
         {!isAnthropicConfigured() ? (
           <Card className="mt-8">
@@ -46,9 +84,21 @@ export default async function GraphPage() {
           <Card className="mt-8">
             <CardContent className="flex flex-col items-center gap-3 p-10 text-center">
               <Loader2 className="size-6 text-[var(--muted-foreground)]" />
-              <h2 className="font-heading text-2xl">No graph yet</h2>
+              <h2 className="font-heading text-2xl">
+                {selectedBook ? "No concepts here yet" : "No graph yet"}
+              </h2>
               <p className="max-w-md text-sm text-[var(--muted-foreground)]">
-                Capture a few highlights — concepts are tagged in the background. Click <em>Rebuild / refresh</em> above to backfill any older highlights.
+                {selectedBook ? (
+                  <>
+                    Nothing&apos;s been tagged from{" "}
+                    <em>{selectedBook.title}</em> yet. Capture a few highlights, or click{" "}
+                    <em>Rebuild / refresh</em> to backfill older ones.
+                  </>
+                ) : (
+                  <>
+                    Capture a few highlights — concepts are tagged in the background. Click <em>Rebuild / refresh</em> above to backfill any older highlights.
+                  </>
+                )}
               </p>
             </CardContent>
           </Card>
